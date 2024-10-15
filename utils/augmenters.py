@@ -60,7 +60,7 @@ def train_test_splitter(data: list, split_ratio: float)-> tuple:
     Function: Splits a list of data into train and test split
     Args:
         data (list): Data to be split into train and test split
-        split_ratio (float): The ration in which the data must be split
+        split_ratio (float): The ratio in which the data must be split for training and testing 
     """
 
     # Type check input
