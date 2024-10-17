@@ -6,20 +6,41 @@ from torch.nn import functional as F
 # Model class
 class BigramLanguageModel(nn.Module):
     
-    def __init__(self, vocab_size):
+    def __init__(self, vocab_size: int, torch_params: dict = {}):
         super().__init__()
         # A wrapper around the token lookup table of size vocab_size x vocab_size
         self.token_embedding_table = nn.Embedding(vocab_size, vocab_size)
+        self.device = torch_params.device if "device" in torch_params.keys() else "cpu"
 
-    def forward(self, idx, targets=None):
+    def forward(self, idx: torch.Tensor, targets: torch.Tensor = None):
+        """
+        Function: Feed forward function of the model 
+        Args:
+            idx (torch.Tensor): Input params of the model 
+            targets (torch.Tensor | None): Expected annotated result of the model
+        """
+        # Type cast idx
+        try:    
+            idx = torch.tensor(idx, device=self.device)
+        except Exception as e:
+            raise TypeError(f"Could not convert type {type(idx)} to torch.Tensor")
+        
+        # Embedd logits
         logits = self.token_embedding_table(idx)
 
-        # If we don't hae targets we don't provide loss
+        # If we don't have targets we don't provide loss
         if targets is None:
             loss = None
         
         # Else we compute and provide loss
         else:
+            # Type cast targets
+            try:    
+                targets = torch.tensor(targets, device=self.device)
+            except Exception as e:
+                raise TypeError(f"Could not convert type {type(targets)} to torch.Tensor")
+            
+            # Reshape logits for the loss & return loss and logit
             B, T, C = logits.shape
             logits = logits.view(B*T, C)
             targets = targets.view(B*T)
@@ -27,10 +48,17 @@ class BigramLanguageModel(nn.Module):
         return logits, loss
     
     def generate(self, idx, max_new_tokens):
+        # Type cast idx
+        try:    
+            idx = torch.tensor(idx, device=self.device)
+        except Exception as e:
+            raise TypeError(f"Could not convert type {type(idx)} to torch.Tensor")
+
+        # Generating new tokens        
         for _ in range(max_new_tokens):
 
             # Make prediction using the bigrams
-            logits, loss = self(max_new_tokens)
+            logits, loss = self(idx)
 
             # Focus only on the last timestep
             logits = logits[:, -1, :] # [Batch, -1, Channels]
