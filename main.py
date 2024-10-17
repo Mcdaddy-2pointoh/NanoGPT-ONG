@@ -3,6 +3,7 @@ from utils.loaders import text_data_loader
 from utils.augmenters import naive_tokenizer, train_test_splitter, batch_generator, get_vocab
 from utils.model import BigramLanguageModel
 import torch
+import tqdm
 
 # Main pipeline
 def main(dir_path, block_size, batch_size, split_ratio, max_tokens=100):
@@ -21,7 +22,7 @@ def main(dir_path, block_size, batch_size, split_ratio, max_tokens=100):
         plain_text_data = text_data_loader(dir=dir_path)
     except Exception as e:
         raise RuntimeError("Could not load data from `dir_path`") from e
-    
+
     # Get vocab details
     try: 
         vocab_characters, vocab_size = get_vocab(plain_text_data)
@@ -39,23 +40,28 @@ def main(dir_path, block_size, batch_size, split_ratio, max_tokens=100):
     # Split the data into train test split & Create input and output tensors
     try: 
         train_split, test_split = train_test_splitter(data=tokenized_data, split_ratio=split_ratio) 
-        x_batch, y_batch = batch_generator(data=train_split, block_size=block_size, batch_size=batch_size)
+        
     except Exception as e:
         raise RuntimeError("Could not transform tokenized data") from e
     
-    # Make a bigram model
-
+    # Make a bigram model & test a sample result
+    x_batch, y_batch = batch_generator(data=train_split, block_size=block_size, batch_size=batch_size)
     model = BigramLanguageModel(vocab_size=vocab_size)
     logits, loss = model(x_batch, y_batch)
-    print(logits.shape)
-    print(loss)
 
     # Make a prediction
     idx = torch.zeros((1,1), dtype=torch.long)
     preds = tokenizer.decode(model.generate(idx=idx, max_new_tokens=max_tokens)[0].tolist())
+
+    # Instance an optimizer 
+    # optimizer = torch.optim.AdamW(model.parameters, lr=1e-3)
+
+    # Train the model 
+    
+
     return preds
 
-result = main(dir_path="./data/ong.txt",
+result = main(dir_path="./data/",
               block_size=8,
               batch_size=4,
               split_ratio= 0.8,
