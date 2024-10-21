@@ -1,3 +1,10 @@
+# Venv
 nanogpt
+# Data source
 data/ong.txt
+
+# Pycache
 __pycache__
+
+# egg.info
+nano_gpt.egg-info
