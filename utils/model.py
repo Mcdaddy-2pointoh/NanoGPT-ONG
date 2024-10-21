@@ -20,10 +20,11 @@ class BigramLanguageModel(nn.Module):
             targets (torch.Tensor | None): Expected annotated result of the model
         """
         # Type cast idx
-        try:    
-            idx = torch.tensor(idx, device=self.device)
-        except Exception as e:
-            raise TypeError(f"Could not convert type {type(idx)} to torch.Tensor")
+        if type(idx) != torch.Tensor:
+            try:    
+                idx = torch.tensor(idx, device=self.device)
+            except Exception as e:
+                raise TypeError(f"Could not convert type {type(idx)} to torch.Tensor")
         
         # Embedd logits
         logits = self.token_embedding_table(idx)
@@ -34,11 +35,11 @@ class BigramLanguageModel(nn.Module):
         
         # Else we compute and provide loss
         else:
-            # Type cast targets
-            try:    
-                targets = torch.tensor(targets, device=self.device)
-            except Exception as e:
-                raise TypeError(f"Could not convert type {type(targets)} to torch.Tensor")
+            if type(targets) != torch.Tensor:
+                try:    
+                    targets = torch.tensor(targets, device=self.device)
+                except Exception as e:
+                    raise TypeError(f"Could not convert type {type(targets)} to torch.Tensor")
             
             # Reshape logits for the loss & return loss and logit
             B, T, C = logits.shape
@@ -49,10 +50,11 @@ class BigramLanguageModel(nn.Module):
     
     def generate(self, idx, max_new_tokens):
         # Type cast idx
-        try:    
-            idx = torch.tensor(idx, device=self.device)
-        except Exception as e:
-            raise TypeError(f"Could not convert type {type(idx)} to torch.Tensor")
+        if type(idx) != torch.Tensor:
+            try:    
+                idx = torch.tensor(idx, device=self.device)
+            except Exception as e:
+                raise TypeError(f"Could not convert type {type(idx)} to torch.Tensor")
 
         # Generating new tokens        
         for _ in range(max_new_tokens):
