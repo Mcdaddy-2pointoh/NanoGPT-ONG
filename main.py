@@ -2,11 +2,11 @@
 from utils.loaders import text_data_loader
 from utils.augmenters import naive_tokenizer, train_test_splitter, batch_generator, get_vocab
 from utils.model import BigramLanguageModel
+from utils.trainer import naive_trainer
 import torch
-import tqdm
 
 # Main pipeline
-def main(dir_path, block_size, batch_size, split_ratio, max_tokens=100):
+def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100):
     """
     Function: Main pipeline to train 
     Args:
@@ -45,26 +45,29 @@ def main(dir_path, block_size, batch_size, split_ratio, max_tokens=100):
         raise RuntimeError("Could not transform tokenized data") from e
     
     # Make a bigram model & test a sample result
-    x_batch, y_batch = batch_generator(data=train_split, block_size=block_size, batch_size=batch_size)
+    x_batch, y_batch = batch_generator(data=train_split, block_size=block_size, batch_size=batch_size, as_torch_tensors=False)
     model = BigramLanguageModel(vocab_size=vocab_size)
     logits, loss = model(x_batch, y_batch)
 
-    # Make a prediction
+    # Instance an optimizer 
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+
+    # Train the model 
+    model, losses = naive_trainer(data=tokenized_data, model=model, optimizer=optimizer, batch_size=batch_size, block_size=block_size, steps=steps)
+
+    # Predict from the model
     idx = torch.zeros((1,1), dtype=torch.long)
     preds = tokenizer.decode(model.generate(idx=idx, max_new_tokens=max_tokens)[0].tolist())
 
-    # Instance an optimizer 
-    # optimizer = torch.optim.AdamW(model.parameters, lr=1e-3)
+    return {"model": model, "losses": losses, "preds": preds}
 
-    # Train the model 
-    
-
-    return preds
-
-result = main(dir_path="./data/",
+results = main(dir_path="./data/",
               block_size=8,
               batch_size=4,
+              steps=10000,
               split_ratio= 0.8,
               )
 
-print(result)
+print(results["preds"])
+for i in results["losses"]:
+    print(i)
