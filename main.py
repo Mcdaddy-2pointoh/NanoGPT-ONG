@@ -4,9 +4,10 @@ from utils.augmenters import naive_tokenizer, train_test_splitter, batch_generat
 from utils.model import BigramLanguageModel
 from utils.trainer import naive_trainer
 import torch
+from utils.visualiser import plot_loss
 
 # Main pipeline
-def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100):
+def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100, save_loss_curves: bool = True):
     """
     Function: Main pipeline to train 
     Args:
@@ -15,6 +16,7 @@ def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100):
         batch_size (int): Batch size is the number of concurrent samples we can load for GPU saturation
         split_ratio (1> float > 0): The ratio in which the data must be split for training and testing 
         max_tokens(int): The max number of new tokens to generate from bigram
+        save_loss_curves(bool): Saves the loss curve as a png in the directory (./runs)
     """
 
     # Check device 
@@ -60,8 +62,11 @@ def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100):
     # Train the model 
     model, losses = naive_trainer(data=tokenized_data, model=model, optimizer=optimizer, batch_size=batch_size, block_size=block_size, steps=steps)
 
+    # Save loss to a directory
+    if save_loss_curves:
+        plot_loss(losses, "./loss-logs", smoothen=True)
+
     # Predict from the model
-    idx = torch.zeros((1,1), dtype=torch.long)
     idx = torch.zeros((1,1), dtype=torch.long).to(device=device)
     preds = tokenizer.decode(model.generate(idx=idx, max_new_tokens=max_tokens)[0].tolist())
 
@@ -70,10 +75,10 @@ def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100):
 results = main(dir_path="./data/",
               block_size=8,
               batch_size=4,
-              steps=10000,
+              steps=50000,
               split_ratio= 0.8,
+              save_loss_curves=True
               )
 
+
 print(results["preds"])
-for i in results["losses"]:
-    print(i)
