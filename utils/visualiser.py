@@ -26,3 +26,16 @@ def plot_loss(losses, dir_path, smoothen=False):
     except Exception as e:
         raise RuntimeError("Could not save loss curve") from e
     
+def estimate_loss(losses, skip: int = None):
+    """
+    Function: Smoothens the losses over `skip` steps
+    Args:
+        losses(list | torch.Tensor) : list of loss per step
+        skip (None | int): Smoothening window
+    """
+    if skip is None:
+        skip = int(len(losses)/1000)
+
+    ret = np.cumsum(losses, dtype=float)
+    ret[skip:] = ret[skip:] - ret[:-skip]
+    return ret[skip - 1:] / skip
