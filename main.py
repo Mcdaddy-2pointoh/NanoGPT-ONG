@@ -1,10 +1,10 @@
 # Imports
-from utils.loaders import text_data_loader
-from utils.augmenters import naive_tokenizer, train_test_splitter, batch_generator, get_vocab
-from utils.model import BigramLanguageModel
-from utils.trainer import naive_trainer
+from utils.data.loaders import text_data_loader
+from utils.data.augmenters import naive_tokenizer, train_test_splitter, batch_generator, get_vocab
+from utils.modelling.models import BigramLanguageModel
+from utils.modelling.trainers import naive_trainer
 import torch
-from utils.visualiser import plot_loss
+from utils.telemetry.visualisers import plot_loss
 
 # Main pipeline
 def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100, save_loss_curves: bool = True):
@@ -21,7 +21,6 @@ def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100, s
 
     # Check device 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(device)
 
     # Load data using text_data_loader
     try:
@@ -75,7 +74,7 @@ def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100, s
 results = main(dir_path="./data/",
               block_size=8,
               batch_size=4,
-              steps=50000,
+              steps=15000,
               split_ratio= 0.8,
               save_loss_curves=True
               )

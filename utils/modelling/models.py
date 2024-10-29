@@ -10,7 +10,8 @@ class BigramLanguageModel(nn.Module):
         super().__init__()
         # A wrapper around the token lookup table of size vocab_size x vocab_size
         self.token_embedding_table = nn.Embedding(vocab_size, vocab_size)
-
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        
     def forward(self, idx: torch.Tensor, targets: torch.Tensor = None):
         """
         Function: Feed forward function of the model 

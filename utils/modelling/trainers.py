@@ -1,6 +1,6 @@
 # Imports
 import torch
-from utils.augmenters import batch_generator
+from utils.data.augmenters import batch_generator
 from tqdm import tqdm
 def naive_trainer(data: torch.Tensor, model: torch.nn.Module, optimizer, batch_size: int, block_size: int, steps: int = 100):
     
