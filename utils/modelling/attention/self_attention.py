@@ -68,3 +68,37 @@ def self_attention_v2(x):
 
     return x_bow_2
 
+# Version 3: Use softmax opperation to perform weighted aggregation
+def self_attention_v3(x):
+    """
+    Function: Use matrix multiplication for the self_attention and softmax to understand token affinity
+    Args:
+        x (tensor): A tensor with 3 dimesions i.e. batch, timestep, channels
+    """   
+
+    # Determine the device
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    # Convert x
+    if type(x) != torch.Tensor:
+        x = torch.tensor(x).to(device=device)
+    
+        if not len(x.shape) == 3:
+            raise ValueError("Expected tensor of 3 dimensions")
+        
+    else:
+        x = x.to(device=device)  
+
+    # Get shape of x
+    B, T, C = x.shape
+
+    # Create a weight matrix
+    tril = torch.tril(torch.ones(T,T)).to(device=device)
+    wei = torch.zeros((T,T)).to(device=device)
+    wei = wei.masked_fill(tril == 0, float('-inf'))
+    wei = F.softmax(wei, dim=-1)
+
+    # Multiplying the weight through all the batches of x
+    x_bow_3 = wei @ x
+
+    return x_bow_3
