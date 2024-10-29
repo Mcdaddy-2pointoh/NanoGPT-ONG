@@ -3,6 +3,11 @@ import torch
 from utils.augmenters import batch_generator
 from tqdm import tqdm
 def naive_trainer(data: torch.Tensor, model: torch.nn.Module, optimizer, batch_size: int, block_size: int, steps: int = 100):
+    
+    # Check device 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(device)
+
     # Validate dtypes
     if type(data) != torch.Tensor:
         try:
@@ -25,7 +30,7 @@ def naive_trainer(data: torch.Tensor, model: torch.nn.Module, optimizer, batch_s
 
         # Sample a batch of data
         try:
-            xb, yb = batch_generator(data=data, block_size=block_size, batch_size=batch_size)
+            xb, yb = batch_generator(data=data, block_size=block_size, batch_size=batch_size, as_torch_tensors=True, device=device)
         except Exception as e:
             raise RuntimeError("Could not generate a batch from data.") from e
         

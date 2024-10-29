@@ -6,11 +6,10 @@ from torch.nn import functional as F
 # Model class
 class BigramLanguageModel(nn.Module):
     
-    def __init__(self, vocab_size: int, torch_params: dict = {}):
+    def __init__(self, vocab_size: int):
         super().__init__()
         # A wrapper around the token lookup table of size vocab_size x vocab_size
         self.token_embedding_table = nn.Embedding(vocab_size, vocab_size)
-        self.device = torch_params.device if "device" in torch_params.keys() else "cpu"
 
     def forward(self, idx: torch.Tensor, targets: torch.Tensor = None):
         """

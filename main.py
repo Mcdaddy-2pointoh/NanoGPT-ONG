@@ -17,6 +17,10 @@ def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100):
         max_tokens(int): The max number of new tokens to generate from bigram
     """
 
+    # Check device 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(device)
+
     # Load data using text_data_loader
     try:
         plain_text_data = text_data_loader(dir=dir_path)
@@ -45,8 +49,9 @@ def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100):
         raise RuntimeError("Could not transform tokenized data") from e
     
     # Make a bigram model & test a sample result
-    x_batch, y_batch = batch_generator(data=train_split, block_size=block_size, batch_size=batch_size, as_torch_tensors=False)
+    x_batch, y_batch = batch_generator(data=train_split, block_size=block_size, batch_size=batch_size, as_torch_tensors=True, device=device)
     model = BigramLanguageModel(vocab_size=vocab_size)
+    model = model.to(device=device)
     logits, loss = model(x_batch, y_batch)
 
     # Instance an optimizer 
@@ -57,6 +62,7 @@ def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100):
 
     # Predict from the model
     idx = torch.zeros((1,1), dtype=torch.long)
+    idx = torch.zeros((1,1), dtype=torch.long).to(device=device)
     preds = tokenizer.decode(model.generate(idx=idx, max_new_tokens=max_tokens)[0].tolist())
 
     return {"model": model, "losses": losses, "preds": preds}

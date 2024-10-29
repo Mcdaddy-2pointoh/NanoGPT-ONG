@@ -82,7 +82,7 @@ def train_test_splitter(data: list, split_ratio: float)-> tuple:
         return data[:train_test_boundary], data[train_test_boundary:]
 
 # Input target generator
-def batch_generator(data: list, block_size:int, batch_size: int, as_torch_tensors=True)-> tuple:
+def batch_generator(data: list, block_size:int, batch_size: int, as_torch_tensors=True, device: str = "cpu")-> tuple:
     """
     Funtion: Produces `batch_size` input and target batches, with each input & target a `block_size` len tensor
     Args:
@@ -119,7 +119,9 @@ def batch_generator(data: list, block_size:int, batch_size: int, as_torch_tensor
 
         # Convert dtype to torch.Tensor
         if as_torch_tensors:
-            x = torch.stack([data[index:index+block_size] for index in indices])
-            y = torch.stack([data[index+1:index+block_size+1] for index in indices])
-
-        return x, y
+            x = torch.stack([torch.tensor(data[index:index+block_size]) for index in indices])
+            y = torch.stack([torch.tensor(data[index+1:index+block_size+1]) for index in indices])
+            return x.to(device=device), y.to(device=device)
+        
+        else:
+            return x, y
