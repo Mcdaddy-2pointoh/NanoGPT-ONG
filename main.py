@@ -5,6 +5,7 @@ from utils.modelling.models import BigramLanguageModel
 from utils.modelling.trainers import naive_trainer
 import torch
 from utils.telemetry.visualisers import plot_loss
+import os
 
 # Main pipeline
 def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100, save_loss_curves: bool = True):
@@ -51,7 +52,7 @@ def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100, s
     
     # Make a bigram model & test a sample result
     x_batch, y_batch = batch_generator(data=train_split, block_size=block_size, batch_size=batch_size, as_torch_tensors=True, device=device)
-    model = BigramLanguageModel(vocab_size=vocab_size)
+    model = BigramLanguageModel(vocab_size=vocab_size, block_size=block_size, n_embedd=32)
     model = model.to(device=device)
     logits, loss = model(x_batch, y_batch)
 

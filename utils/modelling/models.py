@@ -6,12 +6,19 @@ from torch.nn import functional as F
 # Model class
 class BigramLanguageModel(nn.Module):
     
-    def __init__(self, vocab_size: int):
+    def __init__(self, vocab_size: int, block_size: int, n_embedd: int = 32, device: str = None):
         super().__init__()
-        # A wrapper around the token lookup table of size vocab_size x vocab_size
-        self.token_embedding_table = nn.Embedding(vocab_size, vocab_size)
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        
+        # A wrapper around the token lookup table of size vocab_size x embedding size
+        self.token_embedding_table = nn.Embedding(vocab_size, n_embedd)
+        self.position_embedding_table = nn.Embedding(block_size, n_embedd)
+        self.lm_head = nn.Linear(n_embedd, vocab_size)
+        if device is None:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        elif device in ["cuda", "cpu"]:
+            self.device = device
+        else:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+
     def forward(self, idx: torch.Tensor, targets: torch.Tensor = None):
         """
         Function: Feed forward function of the model 
@@ -19,6 +26,8 @@ class BigramLanguageModel(nn.Module):
             idx (torch.Tensor): Input params of the model 
             targets (torch.Tensor | None): Expected annotated result of the model
         """
+        # Enable device 
+        
         # Type cast idx
         if type(idx) != torch.Tensor:
             try:    
@@ -26,8 +35,24 @@ class BigramLanguageModel(nn.Module):
             except Exception as e:
                 raise TypeError(f"Could not convert type {type(idx)} to torch.Tensor")
         
-        # Embedd logits
-        logits = self.token_embedding_table(idx)
+        # Get shape of idx
+        B, T = idx.shape
+        print(B, T)
+
+        # Embedd Tokens
+        token_embeddings = self.token_embedding_table(idx) # B, T, C = (B, T, n_embedd)
+        token_embeddings = token_embeddings.to(device=self.device)
+
+        # Embedd Position
+        positional_indices = torch.arange(T).to(device=self.device)
+        print(positional_indices.shape)
+        positional_embeddings = self.position_embedding_table(positional_indices) # (T,C)
+        
+        # Combine the two embeddings to get our input tensor
+        x = token_embeddings + positional_embeddings
+
+        # Get logits
+        logits = self.lm_head(x) 
 
         # If we don't have targets we don't provide loss
         if targets is None:
@@ -58,7 +83,7 @@ class BigramLanguageModel(nn.Module):
 
         # Generating new tokens        
         for _ in range(max_new_tokens):
-
+            
             # Make prediction using the bigrams
             logits, loss = self(idx)
 
