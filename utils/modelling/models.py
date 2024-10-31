@@ -2,6 +2,7 @@
 import torch 
 import torch.nn as nn
 from torch.nn import functional as F
+from utils.modelling.attention.attention_heads import Head 
 
 # Model class
 class BigramLanguageModel(nn.Module):
@@ -9,15 +10,29 @@ class BigramLanguageModel(nn.Module):
     def __init__(self, vocab_size: int, block_size: int, n_embedd: int = 32, device: str = None):
         super().__init__()
         # A wrapper around the token lookup table of size vocab_size x embedding size
-        self.token_embedding_table = nn.Embedding(vocab_size, n_embedd)
-        self.position_embedding_table = nn.Embedding(block_size, n_embedd)
-        self.lm_head = nn.Linear(n_embedd, vocab_size)
+
         if device is None:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
         elif device in ["cuda", "cpu"]:
             self.device = device
         else:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        # Updating the selected device variable
+        device = self.device
+        
+        # Setting up model params
+        self.n_embedd = n_embedd
+        self.block_size = block_size
+        self.vocab_size = vocab_size
+
+        # Setting the Embedding layers
+        self.token_embedding_table = nn.Embedding(vocab_size, n_embedd).to(device=device)
+        self.position_embedding_table = nn.Embedding(block_size, n_embedd).to(device=device)
+
+        # Setting up attention head
+        self.attention_head = Head(n_embedd=n_embedd, block_size=block_size, device=device, head_size=n_embedd)
+        self.lm_head = nn.Linear(n_embedd, vocab_size)
 
     def forward(self, idx: torch.Tensor, targets: torch.Tensor = None):
         """
@@ -48,6 +63,9 @@ class BigramLanguageModel(nn.Module):
         
         # Combine the two embeddings to get our input tensor
         x = token_embeddings + positional_embeddings
+
+        # Feed x into the self attention head
+        x = self.attention_head(x)
 
         # Get logits
         logits = self.lm_head(x) 
@@ -82,6 +100,9 @@ class BigramLanguageModel(nn.Module):
         # Generating new tokens        
         for _ in range(max_new_tokens):
             
+            # Condensed idx as the embedding dim for positional embeddings in equal to block size and hence the size of idx can never be gereater than block size
+            idx = idx[:, -self.block_size:]
+
             # Make prediction using the bigrams
             logits, loss = self(idx)
 

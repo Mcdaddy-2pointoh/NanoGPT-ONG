@@ -8,7 +8,7 @@ from utils.telemetry.visualisers import plot_loss
 import os
 
 # Main pipeline
-def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100, save_loss_curves: bool = True):
+def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100, save_loss_curves: bool = True, learning_rate: float = 1e-3):
     """
     Function: Main pipeline to train 
     Args:
@@ -57,7 +57,7 @@ def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100, s
     logits, loss = model(x_batch, y_batch)
 
     # Instance an optimizer 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
     # Train the model 
     model, losses = naive_trainer(data=tokenized_data, model=model, optimizer=optimizer, batch_size=batch_size, block_size=block_size, steps=steps)
@@ -77,7 +77,8 @@ results = main(dir_path="./data/",
               batch_size=4,
               steps=15000,
               split_ratio= 0.8,
-              save_loss_curves=True
+              save_loss_curves=True,
+              learning_rate=1e-3
               )
 
 
