@@ -1,7 +1,8 @@
 # Venv
 nanogpt
+
 # Data source
-data/ong.txt
+data
 
 # Pycache
 __pycache__
