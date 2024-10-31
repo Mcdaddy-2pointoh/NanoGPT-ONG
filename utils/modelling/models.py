@@ -37,7 +37,6 @@ class BigramLanguageModel(nn.Module):
         
         # Get shape of idx
         B, T = idx.shape
-        print(B, T)
 
         # Embedd Tokens
         token_embeddings = self.token_embedding_table(idx) # B, T, C = (B, T, n_embedd)
@@ -45,7 +44,6 @@ class BigramLanguageModel(nn.Module):
 
         # Embedd Position
         positional_indices = torch.arange(T).to(device=self.device)
-        print(positional_indices.shape)
         positional_embeddings = self.position_embedding_table(positional_indices) # (T,C)
         
         # Combine the two embeddings to get our input tensor
@@ -100,7 +98,5 @@ class BigramLanguageModel(nn.Module):
             idx = torch.cat((idx, idx_next), dim=1)
 
         return idx
-
-
 
     
