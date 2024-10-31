@@ -8,7 +8,7 @@ from utils.telemetry.visualisers import plot_loss
 import os
 
 # Main pipeline
-def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100, save_loss_curves: bool = True, learning_rate: float = 1e-3):
+def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=300, save_loss_curves: bool = True, learning_rate: float = 1e-3):
     """
     Function: Main pipeline to train 
     Args:
@@ -18,6 +18,7 @@ def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100, s
         split_ratio (1> float > 0): The ratio in which the data must be split for training and testing 
         max_tokens(int): The max number of new tokens to generate from bigram
         save_loss_curves(bool): Saves the loss curve as a png in the directory (./runs)
+        learning_rate(float): Learning rate fed to the optimizer
     """
 
     # Check device 
@@ -68,18 +69,26 @@ def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=100, s
 
     # Predict from the model
     idx = torch.zeros((1,1), dtype=torch.long).to(device=device)
+
     preds = tokenizer.decode(model.generate(idx=idx, max_new_tokens=max_tokens)[0].tolist())
 
     return {"model": model, "losses": losses, "preds": preds}
 
 results = main(dir_path="./data/",
-              block_size=8,
-              batch_size=4,
-              steps=15000,
+              block_size=1000,
+              batch_size=12,
+              steps=5000,
               split_ratio= 0.8,
               save_loss_curves=True,
-              learning_rate=1e-3
+              learning_rate=1e-3,
+              max_tokens=1000
               )
 
+# Visualise
+for idx, token in enumerate(results['preds']):
+    print(idx+1, " : ", token)
 
-print(results["preds"])
+
+# Save results to a file
+with open(f"./sandbox/results/run-{str(len(os.listdir('./sandbox/results'))+1).zfill(4)}.txt", "x") as file:
+    file.write(results['preds'])

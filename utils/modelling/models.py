@@ -2,12 +2,24 @@
 import torch 
 import torch.nn as nn
 from torch.nn import functional as F
-from utils.modelling.attention.attention_heads import Head 
+from utils.modelling.layers.transformer_block import Block
+
 
 # Model class
 class BigramLanguageModel(nn.Module):
     
-    def __init__(self, vocab_size: int, block_size: int, n_embedd: int = 32, device: str = None):
+    def __init__(self, vocab_size: int, block_size: int, n_embedd: int = 32, device: str = None, attention_head_size: int = 32, num_heads: int = 4):
+        """
+        Function: Instances an object of class `BigramLanguageModel`
+        Args:
+            vocab_size (int): Number of unique tokens present in the overall dataset
+            block_size (int): Block size is the maximum context window of the model
+            n_embedd (int): Linear dimension in which the token in projected into
+            device (str): The device on which the operation must be carried out `cuda` or `cpu`
+            attention_head_size (int): The projection dimension of each individual attention head
+            num_heads (int): Number of parallel heads to implement
+        """
+
         super().__init__()
         # A wrapper around the token lookup table of size vocab_size x embedding size
 
@@ -21,6 +33,25 @@ class BigramLanguageModel(nn.Module):
         # Updating the selected device variable
         device = self.device
         
+        # Validating model params
+        if not isinstance(n_embedd, int):
+            try:
+                n_embedd = int(n_embedd)
+            except Exception as e:
+                raise TypeError("Argument `n_embedd` must be of type int.")  from e
+            
+        if not isinstance(block_size, int):
+            try:
+                block_size = int(block_size)
+            except Exception as e:
+                raise TypeError("Argument `block_size` must be of type int.")  from e
+            
+        if not isinstance(vocab_size, int):
+            try:
+                vocab_size = int(vocab_size)
+            except Exception as e:
+                raise TypeError("Argument `vocab_size` must be of type int.")  from e
+        
         # Setting up model params
         self.n_embedd = n_embedd
         self.block_size = block_size
@@ -30,9 +61,36 @@ class BigramLanguageModel(nn.Module):
         self.token_embedding_table = nn.Embedding(vocab_size, n_embedd).to(device=device)
         self.position_embedding_table = nn.Embedding(block_size, n_embedd).to(device=device)
 
-        # Setting up attention head
-        self.attention_head = Head(n_embedd=n_embedd, block_size=block_size, device=device, head_size=n_embedd)
-        self.lm_head = nn.Linear(n_embedd, vocab_size)
+        # Validating attention params
+        if not isinstance(attention_head_size, int):
+            try:
+                attention_head_size = int(attention_head_size)
+            except Exception as e:
+                raise TypeError("Argument `attention_head_size` must be of type int.")  from e
+            
+        if not isinstance(num_heads, int):
+            try:
+                num_heads = int(num_heads)
+            except Exception as e:
+                raise TypeError("Argument `num_heads` must be of type int.")  from e
+
+        if attention_head_size % num_heads != 0:
+            raise ValueError("Attention heads size must be a multiple of the number of attention heads")
+        
+        # Setting up attention params
+        self.attention_head_size = attention_head_size
+        self.num_heads = num_heads
+
+        # Setting up attention heads splitting the number of attention size over the n heads
+        self.blocks = nn.Sequential(
+            Block(num_heads = num_heads, n_embedd=n_embedd, block_size=block_size, device=device, attention_head_size=attention_head_size),
+            Block(num_heads = num_heads, n_embedd=n_embedd, block_size=block_size, device=device, attention_head_size=attention_head_size),
+            Block(num_heads = num_heads, n_embedd=n_embedd, block_size=block_size, device=device, attention_head_size=attention_head_size),
+            Block(num_heads = num_heads, n_embedd=n_embedd, block_size=block_size, device=device, attention_head_size=attention_head_size)
+        )
+        self.lm_head = nn.Linear(attention_head_size, vocab_size)
+
+        
 
     def forward(self, idx: torch.Tensor, targets: torch.Tensor = None):
         """
@@ -64,8 +122,8 @@ class BigramLanguageModel(nn.Module):
         # Combine the two embeddings to get our input tensor
         x = token_embeddings + positional_embeddings
 
-        # Feed x into the self attention head
-        x = self.attention_head(x)
+        # Sequentially run multi-headed attention multiple times
+        x = self.blocks(x)
 
         # Get logits
         logits = self.lm_head(x) 
@@ -89,8 +147,14 @@ class BigramLanguageModel(nn.Module):
             loss = F.cross_entropy(logits, target=targets)
         return logits, loss
     
-    def generate(self, idx, max_new_tokens):
-        # Type cast idx
+    def generate(self, idx: torch.Tensor, max_new_tokens: int = 100):
+        """
+        Function: Funtion to generate the next N tokens 
+        Args:
+            idx (torch.Tensor): Input params of the model 
+            max_new_tokens (int): Maximum number of tokens that the model should predict
+        """
+
         if type(idx) != torch.Tensor:
             try:    
                 idx = torch.tensor(idx, device=self.device)
