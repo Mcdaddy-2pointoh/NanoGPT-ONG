@@ -6,7 +6,6 @@ def naive_trainer(data: torch.Tensor, model: torch.nn.Module, optimizer, batch_s
     
     # Check device 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(device)
 
     # Validate dtypes
     if type(data) != torch.Tensor:
