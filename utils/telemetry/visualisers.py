@@ -34,7 +34,7 @@ def estimate_loss(losses, skip: int = None):
         skip (None | int): Smoothening window
     """
     if skip is None:
-        skip = int(len(losses)/1000)
+        skip = int(len(losses)/100)
 
     ret = np.cumsum(losses, dtype=float)
     ret[skip:] = ret[skip:] - ret[:-skip]
