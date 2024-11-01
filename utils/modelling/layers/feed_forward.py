@@ -7,7 +7,7 @@ class FeedForward(nn.Module):
     A single MLP followed by non-linearity
     """
 
-    def __init__(self, attention_head_size: int = 16, device: str=None):
+    def __init__(self, attention_head_size: int = 16, dropout: float = 0.2, device: str=None):
         super().__init__()
 
         # Validate attention head size 
@@ -28,8 +28,10 @@ class FeedForward(nn.Module):
         device = self.device
 
         self.net = nn.Sequential(
-            nn.Linear(attention_head_size, attention_head_size),
-            nn.ReLU()
+            nn.Linear(attention_head_size, attention_head_size * 4),
+            nn.ReLU(),
+            nn.Linear(attention_head_size * 4, attention_head_size),
+            nn.Dropout(dropout)
         ).to(device=device)
 
     def forward(self, x):

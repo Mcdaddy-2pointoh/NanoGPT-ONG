@@ -8,7 +8,7 @@ class Head(nn.Module):
     Class:  One head of self attention
     """
 
-    def __init__(self, block_size: int, n_embedd: int = 32, device: str = None, attention_head_size: int = 16):
+    def __init__(self, block_size: int, n_embedd: int = 32, device: str = None, attention_head_size: int = 16, dropout: float = 0.20):
         """
         Function: Instances an object of class `Head`
         Args:
@@ -39,6 +39,10 @@ class Head(nn.Module):
         self.query = nn.Linear(n_embedd, attention_head_size, bias=False, device=device)
         self.register_buffer("tril", torch.tril(torch.ones((block_size, block_size))).to(device=device))
 
+        # Dropout params
+        self.dropout = dropout
+        self.Dropout = nn.Dropout(dropout).to(device=device)
+
     def forward(self, x):
         """
         Function: Feed forward function of the multiple attention heads 
@@ -61,6 +65,9 @@ class Head(nn.Module):
         wei = wei.masked_fill(self.tril[:T, :T] == 0, float("-inf"))
         wei = F.softmax(wei, dim=-1)
 
+        # Applying dropout 
+        wei = self.Dropout(wei)
+
         # Perform weighted aggregation
         out = wei @ self.value(x)
 
@@ -71,7 +78,7 @@ class MultiHeadAttention(nn.Module):
     Class: Implements multiple heads of self attention
     """
 
-    def __init__(self, num_heads: int, block_size: int, n_embedd: int = 32, device: str = None, attention_head_size: int = 16):
+    def __init__(self, num_heads: int, block_size: int, n_embedd: int = 32, device: str = None, attention_head_size: int = 16, dropout: float = 0.2):
         """
         Function: Instances an object of class `MultiHeadAttention`
         Args:
@@ -102,7 +109,14 @@ class MultiHeadAttention(nn.Module):
         device = self.device
 
         # Specifying the heads 
-        self.heads = nn.ModuleList([Head(block_size=block_size, n_embedd=n_embedd, device=device, attention_head_size=attention_head_size)] * num_heads)
+        self.heads = nn.ModuleList([Head(block_size=block_size, n_embedd=n_embedd, device=device, attention_head_size=attention_head_size, dropout=dropout)] * num_heads)
+
+        # Projection of self attention to prepare for the residual skips
+        self.proj = nn.Linear(n_embedd, n_embedd).to(device=device)
+
+        # Dropout params and layer
+        self.dropout = dropout
+        self.Dropout = nn.Dropout(dropout).to(device=device)
 
     def forward(self, x):
         """
@@ -110,4 +124,13 @@ class MultiHeadAttention(nn.Module):
         Args:
             x (torch.Tensor): Input params of the multiple attention heads 
         """
-        return torch.cat([head(x) for head in self.heads], dim=-1)
+        # Get Multiheaded attention score
+        out = torch.cat([head(x) for head in self.heads], dim=-1).to(device=self.device)
+
+        # Project into the residual dimensions
+        out = self.proj(out)
+
+        # Include dropout
+        out = self.Dropout(out)
+
+        return out
