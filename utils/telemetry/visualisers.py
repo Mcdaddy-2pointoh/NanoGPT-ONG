@@ -21,7 +21,7 @@ def plot_loss(losses, dir_path, smoothen=False):
 
     try: 
         plt.plot(list(range(1,len(losses)+1)), losses)
-        plt.savefig(os.path.join(dir_path, f"loss-run-{run_number}.png"))
+        plt.savefig(os.path.join(dir_path, f"loss.png"))
 
     except Exception as e:
         raise RuntimeError("Could not save loss curve") from e

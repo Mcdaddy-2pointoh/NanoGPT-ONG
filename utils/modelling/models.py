@@ -8,7 +8,7 @@ from utils.modelling.layers.transformer_block import Block
 # Model class
 class BigramLanguageModel(nn.Module):
     
-    def __init__(self, vocab_size: int, block_size: int, n_embedd: int = 32, device: str = None, attention_head_size: int = 32, num_heads: int = 4):
+    def __init__(self, vocab_size: int, block_size: int, n_embedd: int = 32, device: str = None, attention_head_size: int = 32, num_heads: int = 4, num_layers: int = 6, dropout: float = 0.2):
         """
         Function: Instances an object of class `BigramLanguageModel`
         Args:
@@ -83,11 +83,13 @@ class BigramLanguageModel(nn.Module):
 
         # Setting up attention heads splitting the number of attention size over the n heads
         self.blocks = nn.Sequential(
-            Block(num_heads = num_heads, n_embedd=n_embedd, block_size=block_size, device=device, attention_head_size=attention_head_size),
-            Block(num_heads = num_heads, n_embedd=n_embedd, block_size=block_size, device=device, attention_head_size=attention_head_size),
-            Block(num_heads = num_heads, n_embedd=n_embedd, block_size=block_size, device=device, attention_head_size=attention_head_size),
-            Block(num_heads = num_heads, n_embedd=n_embedd, block_size=block_size, device=device, attention_head_size=attention_head_size)
+            *[Block(num_heads = num_heads, n_embedd=n_embedd, block_size=block_size, device=device, attention_head_size=attention_head_size, dropout=dropout) for _ in range(num_layers)] 
         )
+
+        # Layer norm
+        self.ln = nn.LayerNorm(attention_head_size)
+
+        # Pass the value to the LM head to get the token out
         self.lm_head = nn.Linear(attention_head_size, vocab_size)
 
         
@@ -124,6 +126,9 @@ class BigramLanguageModel(nn.Module):
 
         # Sequentially run multi-headed attention multiple times
         x = self.blocks(x)
+
+        # Layer normalising 
+        x = self.ln(x)
 
         # Get logits
         logits = self.lm_head(x) 
