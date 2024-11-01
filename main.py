@@ -21,6 +21,15 @@ def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=300, s
         learning_rate(float): Learning rate fed to the optimizer
     """
 
+    # Create run number
+    run_number = str(len(os.listdir("./runs")) + 1).zfill(4)
+
+    # Create a run directory
+    os.mkdir(f"./runs/run-{run_number}")
+    os.mkdir(f"./runs/run-{run_number}/loss-logs")
+    os.mkdir(f"./runs/run-{run_number}/results")
+    os.mkdir(f"./runs/run-{run_number}/model")
+
     # Check device 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -54,6 +63,15 @@ def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=300, s
     # Make a bigram model & test a sample result
     x_batch, y_batch = batch_generator(data=train_split, block_size=block_size, batch_size=batch_size, as_torch_tensors=True, device=device)
     model = BigramLanguageModel(vocab_size=vocab_size, block_size=block_size, n_embedd=32)
+    model = BigramLanguageModel(vocab_size=vocab_size, 
+                                block_size=block_size, 
+                                n_embedd=n_embedd,
+                                device=device,
+                                attention_head_size=attention_head_size,
+                                num_heads= num_heads,
+                                num_layers=num_layers,
+                                dropout = dropout
+                                )
     model = model.to(device=device)
     logits, loss = model(x_batch, y_batch)
 
@@ -63,14 +81,25 @@ def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=300, s
     # Train the model 
     model, losses = naive_trainer(data=tokenized_data, model=model, optimizer=optimizer, batch_size=batch_size, block_size=block_size, steps=steps)
 
-    # Save loss to a directory
-    if save_loss_curves:
-        plot_loss(losses, "./loss-logs", smoothen=True)
-
     # Predict from the model
     idx = torch.zeros((1,1), dtype=torch.long).to(device=device)
-
     preds = tokenizer.decode(model.generate(idx=idx, max_new_tokens=max_tokens)[0].tolist())
+
+    # Save predictions to file
+    with open(f"./runs/run-{run_number}/results/preds.txt", "x") as file:
+        file.write(preds)
+
+    # Save loss to a directory
+    if save_loss_curves:
+        plot_loss(losses, f"./runs/run-{run_number}/loss-logs", smoothen=False)
+
+    # Save model
+    torch.save(model.state_dict(), f"./runs/run-{run_number}/model/BigramModel.pt")
+    torch.save(optimizer.state_dict(), f"./runs/run-{run_number}/model/Optimizer.pt")
+
+    # Save the losses to the npy file
+    losses = np.array(losses)
+    np.save(f"./runs/run-{run_number}/loss-logs/losses.npy", losses)
 
     return {"model": model, "losses": losses, "preds": preds}
 
@@ -85,10 +114,7 @@ results = main(dir_path="./data/",
               )
 
 # Visualise
-for idx, token in enumerate(results['preds']):
-    print(idx+1, " : ", token)
+print(results["preds"])
 
 
-# Save results to a file
-with open(f"./sandbox/results/run-{str(len(os.listdir('./sandbox/results'))+1).zfill(4)}.txt", "x") as file:
-    file.write(results['preds'])
+
