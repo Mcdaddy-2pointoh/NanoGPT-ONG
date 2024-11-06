@@ -3,6 +3,7 @@ nanogpt
 
 # Data source
 data
+archive
 
 # Pycache
 __pycache__
