@@ -39,6 +39,10 @@ class naive_tokenizer():
             elif decoder_hash_map == {}:
                 raise ValueError("The arg `decoder_hash_map` cannot be empty when creating tokenizer from hashmap")
             
+            # Validate type and set `encoder_hash_map` & `decoder_hash_map`
+            encoder_hash_map = {str(k): int(v) for k,v in encoder_hash_map.items()}
+            decoder_hash_map = {int(k): str(v) for k,v in decoder_hash_map.items()}
+            
             # All keys of encoder must be a value in decoder
             k_encoder = set(encoder_hash_map.keys())
             v_decoder = set(decoder_hash_map.values())
