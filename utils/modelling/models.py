@@ -16,7 +16,7 @@ class LanguageModel(nn.Module):
             block_size (int): Block size is the maximum context window of the model
             n_embedd (int): Linear dimension in which the token in projected into
             device (str): The device on which the operation must be carried out `cuda` or `cpu`
-            attention_head_size (int): The projection dimension of each individual attention head
+            attention_head_size (int): The projection dimension of all attention heads combined
             num_heads (int): Number of parallel heads to implement
         """
 

@@ -17,15 +17,35 @@ def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=300, s
         dir_path (str): Path to the directory containing the text files
         block_size (int): Block size is the maximum context window of the model
         batch_size (int): Batch size is the number of concurrent samples we can load for GPU saturation
-        split_ratio (1> float > 0): The ratio in which the data must be split for training and testing 
+        split_ratio (1> float > 0): The ratio in which the data must be split for training and testing
+        steps (int) : The number of steps to train the model for
         max_tokens(int): The max number of new tokens to generate from 
-        save_loss_curves(bool): Saves the loss curve as a png in the directory (./runs)
+        save_loss_curves(bool): Saves the loss curve as a png in the directory (./runs/run_number/loss-logs)
         learning_rate(float): Learning rate fed to the optimizer
-        n_embedd(int): Embedding Dimensions for 
+        n_embedd (int): Linear dimension in which the token in projected into
+        attention_head_size (int): The projection dimension of all attention heads combined
+        dropout (1> float >0): The dropout ratio 
+        num_layers (int): The number of replicated decoder only blocks
+        num_heads (int): Number of attention heads to parallelize the attention mechanism
     """
 
     # Create run number
     run_number = str(len(os.listdir("./runs")) + 1).zfill(4)
+
+    # Model Params
+    model_params = {
+        "block_size": block_size,
+        "batch_size": batch_size,
+        "split_ratio": split_ratio,
+        "steps": steps,
+        "max_tokens": max_tokens,
+        "learning_rate": learning_rate,
+        "n_embedd": n_embedd,
+        "attention_head_size": attention_head_size,
+        "dropout": dropout,
+        "num_layers": num_layers,
+        "num_heads": num_heads
+    }
 
     # Create a run directory
     os.mkdir(f"./runs/run-{run_number}")
@@ -96,9 +116,11 @@ def main(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=300, s
     if save_loss_curves:
         plot_loss(losses, f"./runs/run-{run_number}/loss-logs", smoothen=False)
 
-    # Save model
-    torch.save(model.state_dict(), f"./runs/run-{run_number}/model/BigramModel.pt")
+    # Save model, optimizer and params
+    torch.save(model.state_dict(), f"./runs/run-{run_number}/model/LanguageModel.pt")
     torch.save(optimizer.state_dict(), f"./runs/run-{run_number}/model/Optimizer.pt")
+    with open (f"./runs/run-{run_number}/model/params.json", "w") as f:
+        json.dump(model_params, f)
 
     # Save the losses to the npy file
     losses = np.array(losses)
@@ -125,7 +147,7 @@ results = main(dir_path="./data/",
               block_size=1024,
               batch_size=12,
               steps=2500,
-              split_ratio= 0.8,
+              split_ratio= 0.80,
               save_loss_curves=True,
               learning_rate=3e-4,
               max_tokens=1024,
