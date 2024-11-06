@@ -1,0 +1,13 @@
+{
+    "block_size": 1024,
+    "batch_size": 12,
+    "split_ratio": 0.8,
+    "steps": 7500,
+    "max_tokens": 1024,
+    "learning_rate": 3e-4,
+    "n_embedd": 128,
+    "attention_head_size": 128,
+    "dropout": 0.20,
+    "num_layers": 6,
+    "num_heads": 4
+}
