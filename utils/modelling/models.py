@@ -6,11 +6,11 @@ from utils.modelling.layers.transformer_block import Block
 
 
 # Model class
-class BigramLanguageModel(nn.Module):
+class LanguageModel(nn.Module):
     
     def __init__(self, vocab_size: int, block_size: int, n_embedd: int = 32, device: str = None, attention_head_size: int = 32, num_heads: int = 4, num_layers: int = 6, dropout: float = 0.2):
         """
-        Function: Instances an object of class `BigramLanguageModel`
+        Function: Instances an object of class `LanguageModel`
         Args:
             vocab_size (int): Number of unique tokens present in the overall dataset
             block_size (int): Block size is the maximum context window of the model
