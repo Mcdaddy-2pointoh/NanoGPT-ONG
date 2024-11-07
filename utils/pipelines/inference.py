@@ -95,14 +95,14 @@ class InferencePipeline:
 
         else:
             model_path = os.path.join(run_dir, "model", "LanguageModel.pt")
-            self.model = LanguageModel(vocab_size=len(encoder_hash_map.keys()), 
+            self.model = LanguageModel(vocab_size=model_params['vocab_size'], 
                                     block_size=model_params['block_size'], 
                                     n_embedd=model_params['n_embedd'],
                                     device=device,
                                     attention_head_size=model_params['attention_head_size'],
                                     num_heads= model_params['num_heads'],
                                     num_layers=model_params['num_layers'],
-                                    dropout = 0
+                                    dropout = 0,
                                     )
             self.model.load_state_dict(torch.load(model_path, weights_only=True, map_location=device))
             self.model = self.model.to(device=device)

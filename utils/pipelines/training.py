@@ -45,23 +45,6 @@ def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_
     else:
         run_number = str(len(os.listdir(runs_dir)) + 1).zfill(4)
 
-    # Model Params
-    model_params = {
-        "block_size": block_size,
-        "batch_size": batch_size,
-        "split_ratio": split_ratio,
-        "steps": steps,
-        "max_tokens": max_tokens,
-        "learning_rate": learning_rate,
-        "n_embedd": n_embedd,
-        "attention_head_size": attention_head_size,
-        "dropout": dropout,
-        "num_layers": num_layers,
-        "num_heads": num_heads,
-        "tokenizer_type" : tokenizer_type,
-        "tokenizer_encoding" : tokenizer_encoding
-    }
-
     # Create a run directory
     os.mkdir(f"{runs_dir}/run-{run_number}")
     os.mkdir(f"{runs_dir}/run-{run_number}/loss-logs")
@@ -153,6 +136,23 @@ def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_
         plot_loss(losses, f"{runs_dir}/run-{run_number}/loss-logs", smoothen=False)
 
     # Save model, optimizer and params
+        # Model Params
+    model_params = {
+        "block_size": block_size,
+        "batch_size": batch_size,
+        "split_ratio": split_ratio,
+        "steps": steps,
+        "max_tokens": max_tokens,
+        "learning_rate": learning_rate,
+        "n_embedd": n_embedd,
+        "attention_head_size": attention_head_size,
+        "dropout": dropout,
+        "num_layers": num_layers,
+        "num_heads": num_heads,
+        "tokenizer_type" : tokenizer_type,
+        "tokenizer_encoding" : tokenizer_encoding,
+        "vocab_size" : vocab_size
+    }
     torch.save(model.state_dict(), f"{runs_dir}/run-{run_number}/model/LanguageModel.pt")
     torch.save(optimizer.state_dict(), f"{runs_dir}/run-{run_number}/model/Optimizer.pt")
     with open (f"{runs_dir}/run-{run_number}/model/params.json", "w") as f:
