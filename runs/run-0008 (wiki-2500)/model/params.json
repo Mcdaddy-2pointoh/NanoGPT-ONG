@@ -9,5 +9,7 @@
     "attention_head_size": 128,
     "dropout": 0.20,
     "num_layers": 6,
-    "num_heads": 4
+    "num_heads": 4,
+    "tokenizer_type" : "naive",
+    "tokenizer_encoding" : ""
 }
