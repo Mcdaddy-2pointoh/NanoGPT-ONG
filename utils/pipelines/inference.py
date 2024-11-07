@@ -1,5 +1,5 @@
 # Imports
-from utils.data.augmenters import naive_tokenizer
+from utils.tokenizers.naive_tokenizer import naive_tokenizer
 from utils.modelling.models import LanguageModel
 import torch
 import json
