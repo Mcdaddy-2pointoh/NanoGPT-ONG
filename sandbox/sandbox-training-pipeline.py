@@ -1,5 +1,6 @@
 from utils.pipelines.training import training_pipeline
 
+# Training pipeline
 results = training_pipeline(dir_path="./data/",
               block_size=256,
               batch_size=12,
@@ -16,7 +17,8 @@ results = training_pipeline(dir_path="./data/",
               tokenizer_type= "tiktoken",
               tokenizer_encoding= "cl100k_base",
               runs_dir='./runs',
-              smoothen_loss_plots = True
+              smoothen_loss_plots = True,
+              positional_encoder_type="naive"
               )
 
 # Visualise

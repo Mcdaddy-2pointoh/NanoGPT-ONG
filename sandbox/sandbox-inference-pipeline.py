@@ -1,7 +1,7 @@
 from utils.pipelines.inference  import InferencePipeline
 
-pipe = InferencePipeline("./runs/run-0009 (tiktokenizer)", device="cuda:0")
+pipe = InferencePipeline("./runs/run-0010", device="cuda:0")
+prompt = "What is India?"
+res = pipe.generate(prompt, max_tokens=200)
 
-res = pipe.generate("Hi dear model", max_tokens=200)
-
-print(res)
+print(prompt, res)
