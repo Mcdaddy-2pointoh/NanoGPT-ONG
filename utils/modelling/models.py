@@ -3,26 +3,27 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from utils.modelling.layers.transformer_block import Block
+from utils.modelling.encoding.sinusoidal_positional_encoding import SinusoidalPositionalEncoding
 
 
 # Model class
 class LanguageModel(nn.Module):
     
-    def __init__(self, vocab_size: int, block_size: int, n_embedd: int = 32, device: str = None, attention_head_size: int = 32, num_heads: int = 4, num_layers: int = 6, dropout: float = 0.2):
+    def __init__(self, vocab_size: int, block_size: int, n_embedd: int = 32, device: str = None, attention_head_size: int = 32, num_heads: int = 4, num_layers: int = 6, dropout: float = 0.2, positional_encoder_type: str = "sinusoidal"):
         """
         Function: Instances an object of class `LanguageModel`
         Args:
-            vocab_size (int): Number of unique tokens present in the overall dataset
+            vocab_size (int): Number of unique tokens mapped in the tokenizer
             block_size (int): Block size is the maximum context window of the model
             n_embedd (int): Linear dimension in which the token in projected into
             device (str): The device on which the operation must be carried out `cuda` or `cpu`
             attention_head_size (int): The projection dimension of all attention heads combined
-            num_heads (int): Number of parallel heads to implement
+            num_heads (int): Number of parallel heads to implement,
+            positional_encoder_type (Enum(str)): Either has conventional linear postional encoding or sinusoidal positional encoding
         """
-
         super().__init__()
-        # A wrapper around the token lookup table of size vocab_size x embedding size
 
+        # Set device
         if device is None:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
         elif device in ["cuda", "cpu"]:
@@ -32,7 +33,24 @@ class LanguageModel(nn.Module):
 
         # Updating the selected device variable
         device = self.device
+
+        # Setting positional encoders
+        if not isinstance(positional_encoder_type, str):
+            raise TypeError("Argument `positional_encoder_type` must be of type str")
         
+        # Set `positional_encoder_type` to naive
+        elif positional_encoder_type == "naive":
+            self.positional_encoder_type = "naive"
+            self.position_embedding_table = nn.Embedding(block_size, n_embedd).to(device=device)
+
+        # Set `positional_encoder_type` to sinusoidal
+        elif positional_encoder_type == "sinusoidal":
+            self.positional_encoder_type = "sinusoidal"
+
+        # Else key `positional_encoder_type` is out of bounds raise error
+        else:
+            raise ValueError("Argument `positional_encoder_type` must be either 'sinusoidal' or 'naive'")
+
         # Validating model params
         if not isinstance(n_embedd, int):
             try:
@@ -59,7 +77,6 @@ class LanguageModel(nn.Module):
 
         # Setting the Embedding layers
         self.token_embedding_table = nn.Embedding(vocab_size, n_embedd).to(device=device)
-        self.position_embedding_table = nn.Embedding(block_size, n_embedd).to(device=device)
 
         # Validating attention params
         if not isinstance(attention_head_size, int):
@@ -92,8 +109,6 @@ class LanguageModel(nn.Module):
         # Pass the value to the LM head to get the token out
         self.lm_head = nn.Linear(attention_head_size, vocab_size)
 
-        
-
     def forward(self, idx: torch.Tensor, targets: torch.Tensor = None):
         """
         Function: Feed forward function of the model 
@@ -118,9 +133,17 @@ class LanguageModel(nn.Module):
         token_embeddings = token_embeddings.to(device=self.device)
 
         # Embedd Position
-        positional_indices = torch.arange(T).to(device=self.device)
-        positional_embeddings = self.position_embedding_table(positional_indices) # (T,C)
+        ## If naive linear
+        if self.positional_encoder_type == "naive":
+            positional_indices = torch.arange(T).to(device=self.device)
+            positional_embeddings = self.position_embedding_table(positional_indices) # (T,C)
+
+        elif self.positional_encoder_type == "sinusoidal":
+            positional_embeddings = SinusoidalPositionalEncoding(T=T, n_embedd=self.n_embedd, device=self.device)
         
+        else:
+            raise RuntimeError("Could not encode Positions, pleaase check `positional_encoder_type` in params")
+
         # Combine the two embeddings to get our input tensor
         x = token_embeddings + positional_embeddings
 

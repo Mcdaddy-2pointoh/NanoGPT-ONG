@@ -73,13 +73,8 @@ class InferencePipeline:
         # Set device
         self.device = device
 
-        # Load the model Language model
-        if not set(os.listdir(os.path.join(run_dir, 'model'))).issuperset(set(['BigramModel.pt', 'Optimizer.pt', 'params.json'])) and not set(os.listdir(os.path.join(run_dir, 'model'))).issuperset(set(['LanguageModel.pt', 'Optimizer.pt', 'params.json'])):
-            raise FileNotFoundError("To use language model 'BigramModel.pt', 'Optimizer.pt' & 'params.json' are needed for initialising the pytorch model")
-        
-
         # Load model on specified device and get the model params
-        elif set(os.listdir(os.path.join(run_dir, 'model'))).issuperset(set(['BigramModel.pt', 'Optimizer.pt', 'params.json'])):
+        if set(os.listdir(os.path.join(run_dir, 'model'))).issuperset(set(['BigramModel.pt', 'Optimizer.pt', 'params.json'])):
             model_path = os.path.join(run_dir, "model", "BigramModel.pt")
             self.model = LanguageModel(vocab_size=len(encoder_hash_map.keys()), 
                                     block_size=model_params['block_size'], 
@@ -88,12 +83,13 @@ class InferencePipeline:
                                     attention_head_size=model_params['attention_head_size'],
                                     num_heads= model_params['num_heads'],
                                     num_layers=model_params['num_layers'],
-                                    dropout = 0
+                                    dropout = 0,
+                                    positional_encoder_type=model_params["positional_encoder_type"]
                                     )
             self.model.load_state_dict(torch.load(model_path, weights_only=True, map_location=device))
             self.model = self.model.to(device=device)
 
-        else:
+        elif set(os.listdir(os.path.join(run_dir, 'model'))).issuperset(set(['LanguageModel.pt', 'Optimizer.pt', 'params.json'])):
             model_path = os.path.join(run_dir, "model", "LanguageModel.pt")
             self.model = LanguageModel(vocab_size=model_params['vocab_size'], 
                                     block_size=model_params['block_size'], 
@@ -103,9 +99,14 @@ class InferencePipeline:
                                     num_heads= model_params['num_heads'],
                                     num_layers=model_params['num_layers'],
                                     dropout = 0,
+                                    positional_encoder_type=model_params["positional_encoder_type"]
                                     )
             self.model.load_state_dict(torch.load(model_path, weights_only=True, map_location=device))
             self.model = self.model.to(device=device)
+
+        # Raise error
+        else:
+            raise FileNotFoundError("To use language model 'BigramModel.pt', 'Optimizer.pt' & 'params.json' are needed for initialising the pytorch model")
 
     def generate(self, text:str = "Hi dear model", max_tokens: int = 512):
         """

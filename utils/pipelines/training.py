@@ -12,7 +12,7 @@ import numpy as np
 import json
 
 # Training Pipeline
-def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=300, save_loss_curves: bool = True, learning_rate: float = 1e-3, n_embedd: int = 32, attention_head_size: int = 32, dropout: float = 0.20, num_layers: int = 6, num_heads: int = 4, tokenizer_type: str = "tiktoken", tokenizer_encoding: str = "", runs_dir: str = "./runs", smoothen_loss_plots: bool = False):
+def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=300, save_loss_curves: bool = True, learning_rate: float = 1e-3, n_embedd: int = 32, attention_head_size: int = 32, dropout: float = 0.20, num_layers: int = 6, num_heads: int = 4, tokenizer_type: str = "tiktoken", tokenizer_encoding: str = "", runs_dir: str = "./runs", smoothen_loss_plots: bool = False, positional_encoder_type: str= "sinusoidal"):
     """
     Function: training_pipeline pipeline to train 
     Args:
@@ -33,6 +33,7 @@ def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_
         tokenizer_encoding (str):  `Empty string` for naive tokenizer but needed for tiktokenizer
         runs_dir (str): Path to the directory storing telemetry of each training run
         smoothen_loss_plots (bool): Smoothen the loss curve while plotting the train loss
+        positional_encoder_type (ENUM(str)): The type of positional encoder used
     """
 
     # vaidate if the run directory exists else make one & create a run number 
@@ -94,7 +95,23 @@ def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_
     # Else Tokenization failed raise error
     else:
         raise RuntimeError("Tokenization failed")
+    
+    # Setting positional encoders
+    if not isinstance(positional_encoder_type, str):
+        raise TypeError("Argument `positional_encoder_type` must be of type str")
+    
+    # Set `positional_encoder_type` to naive
+    elif positional_encoder_type == "naive":
+        positional_encoder_type = "naive"
+        
+    # Set `positional_encoder_type` to sinusoidal
+    elif positional_encoder_type == "sinusoidal":
+        positional_encoder_type = "sinusoidal"
 
+    # Else key `positional_encoder_type` is out of bounds raise error
+    else:
+        raise ValueError("Argument `positional_encoder_type` must be either 'sinusoidal' or 'naive'")
+    
     # Split the data into train test split & Create input and output tensors
     try: 
         train_split, test_split = train_test_splitter(data=tokenized_data, split_ratio=split_ratio) 
@@ -104,7 +121,8 @@ def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_
     
     # Make a  model & test a sample result
     x_batch, y_batch = batch_generator(data=train_split, block_size=block_size, batch_size=batch_size, as_torch_tensors=True, device=device)
-
+    
+    
     model = LanguageModel(vocab_size=vocab_size, 
                                 block_size=block_size, 
                                 n_embedd=n_embedd,
@@ -112,7 +130,8 @@ def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_
                                 attention_head_size=attention_head_size,
                                 num_heads= num_heads,
                                 num_layers=num_layers,
-                                dropout = dropout
+                                dropout = dropout,
+                                positional_encoder_type=positional_encoder_type
                                 )
     model = model.to(device=device)
     logits, loss = model(x_batch, y_batch)
@@ -133,7 +152,7 @@ def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_
 
     # Save loss to a directory
     if save_loss_curves:
-        plot_loss(losses, f"{runs_dir}/run-{run_number}/loss-logs", smoothen=False)
+        plot_loss(losses, f"{runs_dir}/run-{run_number}/loss-logs", smoothen=smoothen_loss_plots)
 
     # Save model, optimizer and params
         # Model Params
@@ -151,7 +170,8 @@ def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_
         "num_heads": num_heads,
         "tokenizer_type" : tokenizer_type,
         "tokenizer_encoding" : tokenizer_encoding,
-        "vocab_size" : vocab_size
+        "vocab_size" : vocab_size,
+        "positional_encoder_type" : positional_encoder_type
     }
     torch.save(model.state_dict(), f"{runs_dir}/run-{run_number}/model/LanguageModel.pt")
     torch.save(optimizer.state_dict(), f"{runs_dir}/run-{run_number}/model/Optimizer.pt")
