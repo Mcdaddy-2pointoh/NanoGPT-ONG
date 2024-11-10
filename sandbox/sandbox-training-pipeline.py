@@ -18,7 +18,7 @@ results = training_pipeline(dir_path="./data/",
               tokenizer_encoding= "cl100k_base",
               runs_dir='./runs',
               smoothen_loss_plots = True,
-              positional_encoder_type="naive"
+              positional_encoder_type="sinusoidal"
               )
 
 # Visualise

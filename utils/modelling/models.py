@@ -5,7 +5,6 @@ from torch.nn import functional as F
 from utils.modelling.layers.transformer_block import Block
 from utils.modelling.encoding.sinusoidal_positional_encoding import SinusoidalPositionalEncoding
 
-
 # Model class
 class LanguageModel(nn.Module):
     
