@@ -2,7 +2,7 @@
 nanogpt
 
 # Data source
-# data
+data
 archive
 
 # Pycache
@@ -11,9 +11,5 @@ __pycache__
 # egg.info
 nano_gpt.egg-info
 
-# Ignore model 
-LangaugeModel.pt
-
 # sandbox
 *.pt
-/data
