@@ -62,6 +62,8 @@ def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_
     except Exception as e:
         raise RuntimeError("Could not load data from `dir_path`") from e
 
+    print("Loaded Data Successfully!")
+
     # Initialise a tokenizer & tokenized data
     if tokenizer_type not in ["naive", "tiktoken"]:
             raise ValueError(f"Argument tokenizer_type must be 'naive' or 'tiktoken', found {tokenizer_type}")
@@ -95,6 +97,9 @@ def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_
     # Else Tokenization failed raise error
     else:
         raise RuntimeError("Tokenization failed")
+
+    print("Tokenized Data Successfully!")
+    
     
     # Setting positional encoders
     if not isinstance(positional_encoder_type, str):
@@ -122,6 +127,7 @@ def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_
     # Make a  model & test a sample result
     x_batch, y_batch = batch_generator(data=train_split, block_size=block_size, batch_size=batch_size, as_torch_tensors=True, device=device)
     
+    print("Training Begins")
     
     model = LanguageModel(vocab_size=vocab_size, 
                                 block_size=block_size, 
