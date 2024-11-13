@@ -1,5 +1,6 @@
 import torch
 import math as m
+import os
 
 # Create a vocabulary
 def get_vocab(text: str) -> tuple:
@@ -88,3 +89,92 @@ def batch_generator(data: list, block_size:int, batch_size: int, as_torch_tensor
         
         else:
             return x, y
+        
+# Split files on lines
+def file_splitter(data: str, target_dir: str, split_threshold: int, write_frequency: int = 5000, file_encoding: str = "utf-8", verbose: bool = False):
+    """
+    Function: Splits file into smaller segment file containing `split_threshold` number of lines
+    Args:
+        data (str): Path of the file to be split
+        target_dir (str): Path to dump segmented files
+        write_frequency (int): Writes into the segment file after write_frequency lines are read
+        split_threshold (int): Number of lines to split the data into
+        file_encoding (str): File encoding format to read and write the data file, conventionally `utf-8` 
+        verbose (bool): Prints the line operated upon 
+    """
+
+    # Validate data
+    if not isinstance(data, str):
+        raise TypeError("Argument `data` must be  of type str, pointing to a .txt file")
+    
+    elif not os.path.isfile(data):
+        raise FileNotFoundError(f"Path `{data}` doesn't exist or is not a file")
+    
+    elif data.split(".")[-1] != "txt":
+        raise TypeError(f"Path `{data}` must be of type .txt")
+    
+    elif not isinstance(file_encoding, str):
+        raise TypeError(f"Argument `file_encoding` must be of type string and a valid file encoding format")
+    
+    # Validate target_dir
+    elif not os.path.isdir(target_dir):
+        raise FileNotFoundError(f"Argument `target_dir` must be the path to an existing file.")
+    
+    # Split threshold is not an int
+    elif not isinstance(split_threshold, int):
+        raise TypeError(f"Argument `split_threshold` must be of type int.")
+    
+    # Else raise a value
+    else:
+        segment_number = len(os.listdir(target_dir))
+        segment_number = str(segment_number).zfill(7)
+        string = ""
+
+        # Read file
+        try:
+            with open(data, 'r', encoding=file_encoding) as txt_file:
+
+                # for loop to read a line at a time
+                for index, line in enumerate(txt_file):
+
+                    # If verbose print the iiteration
+                    if verbose:
+                        print(f"Line Number: {index + 1}")
+
+                    # Change the segment number
+                    if index % split_threshold == 0:
+                        
+                        # Change the file number
+                        segment_number = int(segment_number) + 1
+                        segment_number = str(segment_number).zfill(7)
+
+                    # Write the string to the temporary variable 
+                    string += f"{line}"
+                    
+                    # Write to segment and save
+                    if index % write_frequency == 0:
+                        segment_file_path = os.path.join(target_dir, f"segment-{segment_number}.txt")
+                        
+                        # Save segmented file 
+                        try: 
+                            with open(segment_file_path, "a+", encoding=file_encoding) as segment:
+                                segment.write(string)
+                                
+                            string = ""
+                        
+                        except Exception as e:
+                            raise RuntimeError(f"Could not save the segment") from e
+
+            return target_dir
+        
+        except Exception as e:
+            raise RuntimeError(f"Could not segment the file") from e
+            
+
+
+
+
+
+
+
+
