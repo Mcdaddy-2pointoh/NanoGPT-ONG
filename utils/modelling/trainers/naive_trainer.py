@@ -53,3 +53,4 @@ def naive_trainer(data: torch.Tensor, model: torch.nn.Module, optimizer, batch_s
 
     return model, losses_at_step   
         
+def naive_training_pipeline()
