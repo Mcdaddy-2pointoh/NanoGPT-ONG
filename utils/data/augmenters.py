@@ -1,6 +1,8 @@
 import torch
 import math as m
 import os
+from tqdm import tqdm
+import numpy as np
 
 # Create a vocabulary
 def get_vocab(text: str) -> tuple:
@@ -171,9 +173,48 @@ def file_splitter(data: str, target_dir: str, split_threshold: int, write_freque
             raise RuntimeError(f"Could not segment the file") from e
             
 
+# Function to convert file to numpy array with tokenization 
+def string_to_npy_files(data_dir: str,
+                  tokenizer,
+                  file_encoding: str,
+                  target_dir: str):
+    
+    for file in tqdm(os.listdir(data_dir)):
+        
+        # Get file metadata
+        file_path = os.path.join(data_dir, file) if os.path.isfile(os.path.join(data_dir, file)) else "dir.dir"
 
+        # Skip dirs
+        if file_path == "dir.dir":
+            continue
 
+        # Else extract file information
+        file_name, file_extension = file.split(".")
+        save_path = os.path.join(target_dir, file_name)
 
+        # If extension is not `.txt` pass
+        if file_extension != "txt":
+            continue
+
+        # Open a file for tokenization
+        with open(file_path, "r", file_encoding) as read_file:
+            string = read_file.read()
+
+        # Tokenize the string and store
+        tokenized_data = tokenizer.encode(string=string)
+
+        # Convert the data to a numpy array and save to file
+        np_tokenized_data = np.array(tokenized_data)
+
+        # Cleaning memory prior to rw
+        del tokenized_data 
+        del read_file
+
+        # Saving npy
+        np.save(save_path, np_tokenized_data)
+    
+        # Return 
+        return None
 
 
 
