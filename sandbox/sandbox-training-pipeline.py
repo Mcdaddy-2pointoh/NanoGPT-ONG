@@ -1,4 +1,4 @@
-from utils.pipelines.training import training_pipeline
+from utils.pipelines.naive_training import training_pipeline
 
 # Training pipeline
 results = training_pipeline(dir_path="./data/",
