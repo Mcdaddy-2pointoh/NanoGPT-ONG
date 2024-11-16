@@ -174,10 +174,19 @@ def file_splitter(data: str, target_dir: str, split_threshold: int, write_freque
             
 
 # Function to convert file to numpy array with tokenization 
-def string_to_npy_files(data_dir: str,
+def segmented_tokenization(data_dir: str,
                   tokenizer,
                   file_encoding: str,
                   target_dir: str):
+    
+    """
+    Function: Takes in the directory of segment files and outputs the tokenized list of the each files and .npy files
+    Args:
+        data_dir (str): The path to the directory containing the text segments4
+        tokenizer: Tik token object to be used for text tokenization
+        file_encoding (str): Encoding format of the text file
+        target_dir (str): Path to the directory to save the encoded npy files
+    """
     
     for file in tqdm(os.listdir(data_dir)):
         
@@ -213,9 +222,5 @@ def string_to_npy_files(data_dir: str,
         # Saving npy
         np.save(save_path, np_tokenized_data)
     
-        # Return 
-        return None
-
-
-
-
+    # Return 
+    return None
