@@ -4,7 +4,7 @@ from utils.data.augmenters import  train_test_splitter, batch_generator, get_voc
 from utils.tokenizers.naive_tokenizer import naive_tokenizer
 from utils.tokenizers.tiktokenizer import tiktokenizer
 from utils.modelling.models import LanguageModel
-from utils.modelling.trainers import naive_trainer
+from utils.modelling.trainers.naive_trainer.trainer import naive_trainer
 import torch
 from utils.telemetry.visualisers import plot_loss
 import os
