@@ -1,22 +1,34 @@
-from utils.data.augmenters import file_splitter
+from utils.data.augmenters import file_splitter, segmented_tokenization
 import os
 import torch
 import shutil
 from tqdm import tqdm
 from utils.tokenizers.tiktokenizer import tiktokenizer
+from utils.modelling.trainers.lazy_batch_trainer.trainer import lazy_batch_trainer
+from utils.modelling.models import LanguageModel
 
 def lazy_batch_training(
     data: str,
     file_splitter_params: dict,
     tokenizer_encoding: str,
+    tokenizer_vocab_size: int,
+    model_params: dict,
+    training_params: dict,
+    check_point_params: dict,
     segment_data: bool = True,
-    runs_dir: str = "./runs"
+    runs_dir: str = "./runs",
+    device: str = "cpu"
 ):
     
     # SETTING UP RUNS
     # Create a directory to store all runs metadata
     # Validate compute devices available on the PC
     # validate if the run directory exists else make one & create a run number 
+    # Define the compute unit to use
+
+    # Check device 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
     if not os.path.exists(runs_dir):
         os.mkdir(runs_dir)
         print(f"Making a directory `runs` in {os.getcwd()}")
@@ -32,6 +44,7 @@ def lazy_batch_training(
     os.mkdir(f"{runs_dir}/run-{run_number}/results")
     os.mkdir(f"{runs_dir}/run-{run_number}/model")
     os.mkdir(f"{runs_dir}/run-{run_number}/tokenizer")
+    os.mkdir(f"{runs_dir}/run-{run_number}/checkpoints")
 
     # Check device 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -42,6 +55,7 @@ def lazy_batch_training(
     # Segment the files if specified
     # Save the data into smaller files
     # Validate the input
+
     if not isinstance(data, str):
         raise ValueError("Argument data must be the path to the .txt file containing the data, Invalid data type found")
     
@@ -57,7 +71,7 @@ def lazy_batch_training(
         if segment_data:
 
             # Validate file_splitter_params
-            if not set(file_splitter_params.keys()).issuperset(set(['segment_target_dir', 'array_target_dir', 'split_threshold', 'verbose', 'file_encoding', 'write_frequency'])):
+            if not set(list(file_splitter_params.keys())).issuperset(set(['segment_target_dir', 'array_target_dir', 'split_threshold', 'verbose', 'file_encoding', 'write_frequency'])):
                 raise ValueError("Argument `file_splitter_params` must be a dictionary with the following keys ['segment_target_dir', 'array_target_dir',  'split_threshold', 'verbose', 'file_encoding', 'write_frequency']")
  
             # Invalid file encoding format
@@ -74,43 +88,50 @@ def lazy_batch_training(
 
             # Target directory is not empty
             elif len(file_splitter_params['segment_target_dir']) != 0:
-                value = str(input("File dir is not empty do you want to overwrite existing file `Y\N`?")).upper()
+                value = str(input("File dir is not empty do you want to overwrite existing file `Y / N`?")).upper()
 
                 if value not in ['Y', 'N']:
                     raise ValueError("Invalid value typed in expected str 'Y' or 'N'")
                 
                 elif value == "Y":
-                    # Clean the directory 
-                    files = os.listdir(file_splitter_params['segment_target_dir'])
-                    for file in files:
-                        file_path = os.path.join(file_splitter_params['segment_target_dir'], file)
-                        if os.path.isfile(file_path):
-                            os.remove(file_path)
+                    try:
+                        # Clean the directory 
+                        files = os.listdir(file_splitter_params['segment_target_dir'])
+                        for file in files:
+                            file_path = os.path.join(file_splitter_params['segment_target_dir'], file)
+                            if os.path.isfile(file_path):
+                                os.remove(file_path)
 
-                    # Run partitioning
-                    print("Please monitor CPU stats while splitting files")
-                    file_splitter(
-                        data=data,
-                        target_dir=file_splitter_params['segment_target_dir'],
-                        split_threshold=file_splitter_params['split_threshold'], # 200k lines per file segment
-                        write_frequency=file_splitter_params['write_frequency'],
-                        file_encoding=file_splitter_params['file_encoding'],
-                        verbose=file_splitter_params['verbose'])  
+                        # Run partitioning
+                        print("Please monitor CPU stats while splitting files")
+                        file_splitter(
+                            data=data,
+                            target_dir=file_splitter_params['segment_target_dir'],
+                            split_threshold=file_splitter_params['split_threshold'], # 200k lines per file segment
+                            write_frequency=file_splitter_params['write_frequency'],
+                            file_encoding=file_splitter_params['file_encoding'],
+                            verbose=file_splitter_params['verbose'])  
                     
+                    except Exception as e:
+                        raise RuntimeError("Could not split file into segments") from e
                 
                 else:
-                    value = str(input("File dir is not empty do you want to partition data again without overwriting `Y\N`?")).upper()
+                    value = str(input("Do you want to segment the new data `Y / N`?")).upper()
 
                     # Partition data without overwriting
                     if value == "Y":
-                        print("Please monitor CPU stats while splitting files")
-                        file_splitter(
-                                data=data,
-                                target_dir=file_splitter_params['segment_target_dir'],
-                                split_threshold=file_splitter_params['split_threshold'], # 200k lines per file segment
-                                write_frequency=file_splitter_params['write_frequency'],
-                                file_encoding=file_splitter_params['file_encoding'],
-                                verbose=file_splitter_params['verbose'])  
+                        try:
+                            print("Please monitor CPU stats while splitting files")
+                            file_splitter(
+                                    data=data,
+                                    target_dir=file_splitter_params['segment_target_dir'],
+                                    split_threshold=file_splitter_params['split_threshold'], # 200k lines per file segment
+                                    write_frequency=file_splitter_params['write_frequency'],
+                                    file_encoding=file_splitter_params['file_encoding'],
+                                    verbose=file_splitter_params['verbose'])  
+                            
+                        except Exception as e:
+                            raise RuntimeError("Could not split file into segments") from e
                         
                     # Skipping partioning
                     elif value == "N":
@@ -123,14 +144,18 @@ def lazy_batch_training(
 
             # If file is empty just begin partitioning
             else:
-                print("Please monitor CPU stats while splitting files")
-                data_dir = file_splitter(
-                        data=data,
-                        target_dir=file_splitter_params['segment_target_dir'],
-                        split_threshold=file_splitter_params['split_threshold'], # 200k lines per file segment
-                        write_frequency=file_splitter_params['write_frequency'],
-                        file_encoding=file_splitter_params['file_encoding'],
-                        verbose=file_splitter_params['verbose'])                  
+                try:
+                    print("Please monitor CPU stats while splitting files")
+                    data_dir = file_splitter(
+                            data=data,
+                            target_dir=file_splitter_params['segment_target_dir'],
+                            split_threshold=file_splitter_params['split_threshold'], # 200k lines per file segment
+                            write_frequency=file_splitter_params['write_frequency'],
+                            file_encoding=file_splitter_params['file_encoding'],
+                            verbose=file_splitter_params['verbose'])      
+
+                except Exception as e:
+                    raise RuntimeError("Could not split file into segments") from e            
         
         # Just ignore processing
         else:
@@ -145,29 +170,176 @@ def lazy_batch_training(
     # If target directory does not exist make one
     if not os.path.isdir(file_splitter_params['array_target_dir']):
         try:
+
+            # Make directory
             os.makedirs(file_splitter_params['array_target_dir'])
+           
+            # Run batched tokenization 
+            print("Please monitor CPU stats while tokenizing files")
+            segmented_tokenization(data_dir=data_dir, tokenizer=tokenizer, file_encoding=file_splitter_params['file_encoding'], target_dir=file_splitter_params['array_target_dir'])
 
         except Exception as e:
             raise RuntimeError("Could not create directories") from e
+        
 
     # Else if the directory has some arrays already present 
-    elif os.path.isdir(file_splitter_params['array_target_dir']) and :
+    elif os.path.isdir(file_splitter_params['array_target_dir']) and len(os.listdir(file_splitter_params['array_target_dir'])) != 0:
+
+        # Ask if we want to clean the directory 
+        value = str(input("The directory seems to have some array files in them, do you want to overwrite on them `Y / N`.")).upper()
+
+        # If overwrite is permitted '
+        # Wipe directory and store the tokenized array as npy file
+        if value == "Y":
+
+            try:
+                # Clean the directory 
+                files = os.listdir(file_splitter_params['array_target_dir'])
+                for file in files:
+                    file_path = os.path.join(file_splitter_params['array_target_dir'], file)
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+
+                # Perform segment tokenization
+                print("Please monitor CPU stats while tokenizing files")
+                array_directory = segmented_tokenization(
+                    data_dir=data_dir,
+                    tokenizer=tokenizer,
+                    file_encoding=file_splitter_params['file_encoding'],
+                    target_dir=file_splitter_params['array_target_dir']
+                )
+            
+            except Exception as e:
+                raise RuntimeError("Could not create array files") from e
+
+        elif value == "N":
+
+            # Do not clean the directory but ask if 
+            # we need to perform segmentation again
+
+            value = str(input("Do we need to re-tokenized the segmented files `Y / N`.")).upper()
+
+            # Re-Tokenize the data into the array files
+            if value == "Y":
+
+                try:
+                    print("Please monitor CPU stats while tokenizing files")
+                    array_directory = segmented_tokenization(
+                        data_dir=data_dir,
+                        tokenizer=tokenizer,
+                        file_encoding=file_splitter_params['file_encoding'],
+                        target_dir=file_splitter_params['array_target_dir']
+                    )
+
+                except Exception as e:
+                    raise RuntimeError("Could not create array files") from e
 
 
+            # Just return the directory name
+            elif value == "N":
+                array_directory = file_splitter_params['array_target_dir']
 
-    for file in tqdm(os.listdir(data_dir)):
+    # Else if there is a directory just perform tokenization
+    else:
+        try:
+            print("Please monitor CPU stats while tokenizing files")
+            array_directory = segmented_tokenization(
+                data_dir=data_dir,
+                tokenizer=tokenizer,
+                file_encoding=file_splitter_params['file_encoding'],
+                target_dir=file_splitter_params['array_target_dir']
+            )
+
+        except Exception as e:
+            raise RuntimeError("Could not create array files") from e
+
+    # MODEL TRAINING
+    # Given N files and M training steps 
+    # Train the model for M//N steps on a single array file
+
+    # Validate input params
+    if not isinstance(tokenizer_vocab_size, int):
+        raise TypeError("Argument `tokenizer_vocab_size` must be of type int")
+    
+    # Validate model_params
+    elif not isinstance(model_params, dict):
+        raise TypeError("Argument `model_params` must be of type dict")
+
+    elif not set(list(model_params.keys())).issuperset(set(['block_size', 'n_embedd', 'attention_head_size', 'num_heads', 'num_layers', 'dropout', 'positional_encoder_type'])):
+        raise ValueError("Argument `model_params` must be a dictionary with the following keys 'block_size', 'n_embedd', 'attention_head_size', 'num_heads', 'num_layers', 'dropout', 'positional_encoder_type'")
+            
+    # Initialise a model class
+    try:
+        model = LanguageModel(
+            vocab_size=tokenizer_vocab_size,
+            block_size=model_params['block_size'],
+            n_embedd=model_params['n_embedd'],
+            attention_head_size=model_params['attention_head_size'],
+            num_heads=model_params['num_heads'],
+            num_layers=model_params['num_layers'],
+            dropout=model_params['dropout'],
+            positional_encoder_type=model_params['positional_encoder_type'],
+            device=device
+        )
+        model = model.to(device=device)
+
+
+    except Exception as e:
+        raise RuntimeError("Failed to initialise a `LanguageModel` object") from e
+
+    # Validate training params
+    if not isinstance(training_params, dict):
+        raise ValueError("Argument `training_params` must be of type dict.")
+
+    elif not set(list(training_params.keys())).issuperset(set(['learning_rate', 'batch_size', 'steps'])):
+        raise ValueError("Argument `training_params` must be of type dict and must have keys ['learning_rate', 'batch_size', 'steps']")
+    
+    # Validate the batch_size
+    elif not isinstance(training_params['learning_rate'], float):
+        try:
+            training_params['learning_rate'] = float(training_params['learning_rate'])
+
+        except Exception as e:
+            raise TypeError("Argument `training_params['learning_rate']` must be of type `int`") from e
         
-        # Get file metadata
-        file_path = os.path.join(data_dir, file)
-        file_name, file_extension = file.split(".")
+    # Validate the batch_size
+    elif not isinstance(training_params['batch_size'], int):
+        try:
+            training_params['batch_size'] = int(training_params['batch_size'])
 
-        # Open a file for tokenization
-        with open(file_path, "r", file_splitter_params['file_encoding']) as read_file:
-            string = read_file.read()
-
-        # Tokenize the string and store
-        tokenized_data = tokenizer.encode(string=string)
-
-        # Convert the data to a numpy array and save to file
-
+        except Exception as e:
+            raise TypeError("Argument `training_params['batch_size']` must be of type `int`") from e
         
+    # Validate the batch_size
+    elif not isinstance(training_params['steps'], int):
+        try:
+            training_params['steps'] = int(training_params['steps'])
+
+        except Exception as e:
+            raise TypeError("Argument `training_params['steps']` must be of type `int`") from e  
+        
+    else:
+        print("Starting Training")
+
+    # Initialise an optimizer object
+    try:
+        optimizer = torch.optim.AdamW(model.parameters(), lr=training_params['learning_rate'])
+
+    except Exception as e:
+        raise RuntimeError("Failed to initialise a `Optimizer` object") from e
+    
+    # Change check_point_params
+    check_point_params['save_dir'] = f"{runs_dir}/run-{run_number}/checkpoints"
+    
+    # Parsing the model and optimizer to the training theory
+    model, losses = lazy_batch_trainer(dir_path=array_directory,
+                                       model=model,
+                                       optimizer=optimizer,
+                                       batch_size=training_params['batch_size'],
+                                       block_size=model_params['block_size'],
+                                       steps=training_params['steps'],
+                                       device=device,
+                                       check_point_params=check_point_params,
+                                       train_ratio=0.95)
+    
+
