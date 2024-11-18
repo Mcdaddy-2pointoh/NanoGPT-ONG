@@ -206,7 +206,7 @@ def segmented_tokenization(data_dir: str,
             continue
 
         # Open a file for tokenization
-        with open(file_path, "r", file_encoding) as read_file:
+        with open(file_path, "r", encoding=file_encoding) as read_file:
             string = read_file.read()
 
         # Tokenize the string and store
@@ -223,4 +223,4 @@ def segmented_tokenization(data_dir: str,
         np.save(save_path, np_tokenized_data)
     
     # Return 
-    return None
+    return target_dir
