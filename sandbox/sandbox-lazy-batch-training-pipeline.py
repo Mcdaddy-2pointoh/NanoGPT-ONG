@@ -28,14 +28,14 @@ model_params = {
 
 # Model check pointing params
 check_point_params = {
-    'save_steps' : 10
+    'save_steps' : 500
 }
 
 # Training params
 training_params = {
     "learning_rate" : 1e-3,
     "batch_size" : 12,
-    "steps" : 115
+    "steps" : 10_000
 }
 
 # Computational Device
