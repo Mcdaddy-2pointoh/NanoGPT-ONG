@@ -1,0 +1,1 @@
+{"block_size": 256, "batch_size": 12, "split_ratio": 0.8, "steps": 10000, "max_tokens": 256, "learning_rate": 0.0009, "n_embedd": 128, "attention_head_size": 128, "dropout": 0.0, "num_layers": 6, "num_heads": 4, "tokenizer_type": "tiktoken", "tokenizer_encoding": "cl100k_base", "vocab_size": 100280, "positional_encoder_type": "sinusoidal"}
