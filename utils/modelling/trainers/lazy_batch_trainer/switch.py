@@ -23,17 +23,20 @@ def switch(status_dictionary: dict, loss: list = None, previous_segment: str = N
     # validate previous_segment
     elif not isinstance(previous_segment, str) and previous_segment is not None:
         raise TypeError("Argument `previous_segment` must be of type string")
-    
+
     # Else update the status dictionary and return the new segment and the statust dictionary
     else:
 
         if loss is not None and previous_segment is not None:
             try:
-                status_dictionary = {
-                    'pending' : status_dictionary['pending'].remove(previous_segment),
-                    'trained' : status_dictionary['trained'].append(previous_segment),
-                    'losses' : {**status_dictionary['losses'], previous_segment: loss}
-                }
+                # Update pending array
+                status_dictionary['pending'].remove(previous_segment)
+
+                # Update trained array
+                status_dictionary['trained'].append(previous_segment)
+
+                # Update the losses key
+                status_dictionary['losses'] = {**status_dictionary['losses'], previous_segment: loss}
             
             except Exception as e:
                 raise ValueError("Could not update `status_dictionary`.") from e
@@ -48,7 +51,7 @@ def switch(status_dictionary: dict, loss: list = None, previous_segment: str = N
             
             except Exception as e:
                 raise ValueError("Could not update `status_dictionary`.") from e
-            
+                        
         # If no segment left to train upon
         if len(status_dictionary['pending']) == 0:
             return status_dictionary, None
