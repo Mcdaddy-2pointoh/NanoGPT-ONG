@@ -23,7 +23,6 @@ setup(
         "setuptools==75.1.0",
         "six==1.16.0",
         "sympy==1.13.3",
-        "torch==2.4.1",
         "typing_extensions==4.12.2",
         "tzdata==2024.2"
     ],
