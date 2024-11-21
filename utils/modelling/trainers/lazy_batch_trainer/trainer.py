@@ -51,6 +51,10 @@ def lazy_batch_trainer(dir_path: str, model: torch.nn.Module, optimizer, batch_s
             # Total segment files
             total_segments = len(array_files)
 
+            # Change frequency 
+            change_frequency =  steps // total_segments
+
+
             # Inital params 
             loss = None
             cummulated_loss = []
@@ -91,14 +95,15 @@ def lazy_batch_trainer(dir_path: str, model: torch.nn.Module, optimizer, batch_s
             for step in tqdm(range(steps)):
                 
                 # Select a new segment to train upon
-                if step % total_segments == 0:
+                if step % change_frequency == 0:
 
                     # Updated status dictionary
-                    print(training_segment)
                     status_dictionary, training_segment = switch(status_dictionary=status_dictionary,
                                               loss=loss,
                                               previous_segment=training_segment)
                     
+                    print(training_segment)
+
                     # Training Segment is None implying no more data left
                     if training_segment is None:
                         break
