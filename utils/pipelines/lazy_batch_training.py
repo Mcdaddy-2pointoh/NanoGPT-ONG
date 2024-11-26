@@ -1,11 +1,14 @@
 from utils.data.augmenters import file_splitter, segmented_tokenization
 import os
 import torch
-import shutil
 from tqdm import tqdm
 from utils.tokenizers.tiktokenizer import tiktokenizer
 from utils.modelling.trainers.lazy_batch_trainer.trainer import lazy_batch_trainer
 from utils.modelling.models import LanguageModel
+import numpy as np
+import json
+from utils.telemetry.visualisers import plot_loss
+
 
 def lazy_batch_training(
     data: str,
@@ -17,7 +20,9 @@ def lazy_batch_training(
     check_point_params: dict,
     segment_data: bool = True,
     runs_dir: str = "./runs",
-    device: str = "cpu"
+    device: str = "cpu",
+    smoothen_loss_plots: bool = True,
+    save_loss_curves: bool = True
 ):
     
     # SETTING UP RUNS
@@ -342,4 +347,38 @@ def lazy_batch_training(
                                        check_point_params=check_point_params,
                                        train_ratio=0.95)
     
+    # Save loss to a directory
+    if save_loss_curves:
+        plot_loss(losses, f"{runs_dir}/run-{run_number}/loss-logs", smoothen=smoothen_loss_plots)
+
+    # Save model, optimizer and params
+        # Model Params
+    model_params = {
+        "block_size": model_params['block_size'],
+        "batch_size": training_params['batch_size'],
+        "split_ratio": 0.9,
+        "steps": training_params['steps'],
+        "max_tokens": model_params['block_size'],
+        "learning_rate": training_params['learning_rate'],
+        "n_embedd": model_params['n_embedd'],
+        "attention_head_size": model_params['attention_head_size'],
+        "dropout": model_params['dropout'],
+        "num_layers": model_params['num_layers'],
+        "num_heads": model_params['num_heads'],
+        "tokenizer_type" : "tiktoken",
+        "tokenizer_encoding" : tokenizer_encoding,
+        "vocab_size" : tokenizer_vocab_size,
+        "positional_encoder_type" : model_params['positional_encoder_type']
+    }
+    torch.save(model.state_dict(), f"{runs_dir}/run-{run_number}/model/LanguageModel.pt")
+    torch.save(optimizer.state_dict(), f"{runs_dir}/run-{run_number}/model/Optimizer.pt")
+    with open (f"{runs_dir}/run-{run_number}/model/params.json", "w") as f:
+        json.dump(model_params, f)
+
+    # Save the losses to the npy file
+    losses = np.array(losses)
+    np.save(f"{runs_dir}/run-{run_number}/loss-logs/losses.npy", losses)
+
+    return model, losses
+
 
