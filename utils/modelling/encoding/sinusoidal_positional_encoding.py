@@ -23,7 +23,7 @@ def SinusoidalPositionalEncoding(T: int, n_embedd: int, n: int = 10_000, device:
 
     # Update embedding
     embeddings[:, 0::2] = torch.sin(positions/denom).to(device=device)
-    embeddings[:, 1::2] = torch.sin(positions/denom).to(device=device)
+    embeddings[:, 1::2] = torch.cos(positions/denom).to(device=device)
 
     # Get embedding map
     return torch.tensor(embeddings).to(device=device)
