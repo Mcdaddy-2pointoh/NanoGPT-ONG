@@ -29,7 +29,7 @@ class FeedForward(nn.Module):
 
         self.net = nn.Sequential(
             nn.Linear(attention_head_size, attention_head_size * 4),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Linear(attention_head_size * 4, attention_head_size),
             nn.Dropout(dropout)
         ).to(device=device)

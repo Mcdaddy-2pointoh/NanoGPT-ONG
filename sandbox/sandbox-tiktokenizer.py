@@ -2,7 +2,7 @@ from utils.tokenizers.tiktokenizer import tiktokenizer
 
 tokenizer = tiktokenizer()
 
-text = "Hello World!"
+text = "Hi, Sharvil how are you."
 
 # Encode
 token_stream = tokenizer.encode(text)

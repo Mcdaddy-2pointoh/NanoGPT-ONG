@@ -134,3 +134,6 @@ class MultiHeadAttention(nn.Module):
         out = self.Dropout(out)
 
         return out
+    
+class CausalAttention(nn.Module):
+    
