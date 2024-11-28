@@ -3,7 +3,7 @@ import os
 from tqdm import tqdm
 from utils.modelling.trainers.lazy_batch_trainer.switch import switch
 import numpy as np
-from utils.data.augmenters import train_test_splitter, batch_generator
+from data_processing.augmenters import train_test_splitter, batch_generator
 
 def lazy_batch_trainer(dir_path: str, model: torch.nn.Module, optimizer, batch_size: int, block_size: int, steps: int, check_point_params: dict = None, device: str = 'cpu', train_ratio: float = 0.90):
     """

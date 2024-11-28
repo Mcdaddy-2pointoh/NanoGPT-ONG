@@ -7,7 +7,7 @@ import numpy as np
 # Create a vocabulary
 def get_vocab(text: str) -> tuple:
     """
-    Function: Converts a corpoora of text to vocabulary of tokens and vocab size
+    Function: Converts a corpora of text to vocabulary of tokens and vocab size
     Args:
         text (str): Overall corpora as a string
     """

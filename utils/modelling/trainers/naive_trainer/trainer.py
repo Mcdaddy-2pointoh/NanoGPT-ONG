@@ -1,6 +1,6 @@
 # Imports
 import torch
-from utils.data.augmenters import batch_generator
+from data_processing.augmenters import batch_generator
 from tqdm import tqdm
 
 

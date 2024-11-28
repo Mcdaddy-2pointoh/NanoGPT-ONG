@@ -1,4 +1,4 @@
-from utils.data.augmenters import file_splitter, segmented_tokenization
+from data_processing.augmenters import file_splitter, segmented_tokenization
 import os
 import torch
 from tqdm import tqdm

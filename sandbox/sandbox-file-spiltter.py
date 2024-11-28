@@ -1,5 +1,5 @@
 from tqdm import tqdm
-from utils.data.augmenters import file_splitter
+from data_processing.augmenters import file_splitter
 
 file_path = "./data/ROOTS.txt"
 target_dir = "./data/segments"

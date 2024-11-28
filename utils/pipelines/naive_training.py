@@ -1,6 +1,6 @@
 # Imports
-from utils.data.loaders import text_data_loader
-from utils.data.augmenters import  train_test_splitter, batch_generator, get_vocab
+from data_processing.loaders import text_data_loader
+from data_processing.augmenters import  train_test_splitter, batch_generator, get_vocab
 from utils.tokenizers.naive_tokenizer import naive_tokenizer
 from utils.tokenizers.tiktokenizer import tiktokenizer
 from utils.modelling.models import LanguageModel
