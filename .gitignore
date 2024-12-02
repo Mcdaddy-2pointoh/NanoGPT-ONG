@@ -15,3 +15,4 @@ nano_gpt.egg-info
 # sandbox
 *.pt
 /nano_gpt.egg-info
+/nano_gpt.egg-info
