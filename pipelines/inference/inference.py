@@ -1,7 +1,7 @@
 # Imports
-from utils.tokenizers.naive_tokenizer import naive_tokenizer
-from utils.tokenizers.tiktokenizer import tiktokenizer
-from utils.modelling.models import LanguageModel
+from tokenizers.naive_tokenizer import naive_tokenizer
+from tokenizers.tiktokenizer import tiktokenizer
+from model.models import LanguageModel
 import torch
 import json
 import os
@@ -88,6 +88,7 @@ class InferencePipeline:
                                     )
             self.model.load_state_dict(torch.load(model_path, weights_only=True, map_location=device))
             self.model = self.model.to(device=device)
+            self.model.eval()
 
         elif set(os.listdir(os.path.join(run_dir, 'model'))).issuperset(set(['LanguageModel.pt', 'Optimizer.pt', 'params.json'])):
             model_path = os.path.join(run_dir, "model", "LanguageModel.pt")
@@ -103,6 +104,7 @@ class InferencePipeline:
                                     )
             self.model.load_state_dict(torch.load(model_path, weights_only=True, map_location=device))
             self.model = self.model.to(device=device)
+            self.model.eval()
 
         # Raise error
         else:
@@ -136,7 +138,8 @@ class InferencePipeline:
             tokenized_text_tensor_btc = torch.reshape(tokenized_text_tensor, shape=(1, *tokenized_text_tensor.shape)).to(device=self.device)
 
             # Parse input to the model 
-            model_gen = self.model.generate(tokenized_text_tensor_btc, max_new_tokens=self.model_params['max_tokens'])
+            with torch.no_grad():
+                model_gen = self.model.generate(tokenized_text_tensor_btc, max_new_tokens=self.model_params['max_tokens'])
 
             # Squeezing model output
             model_gen = model_gen[0].tolist()

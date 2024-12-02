@@ -1,12 +1,12 @@
 # Imports
 from data_processing.loaders import text_data_loader
 from data_processing.augmenters import  train_test_splitter, batch_generator, get_vocab
-from utils.tokenizers.naive_tokenizer import naive_tokenizer
-from utils.tokenizers.tiktokenizer import tiktokenizer
-from utils.modelling.models import LanguageModel
-from utils.modelling.trainers.naive_trainer.trainer import naive_trainer
+from tokenizers.naive_tokenizer import naive_tokenizer
+from tokenizers.tiktokenizer import tiktokenizer
+from model.models import LanguageModel
+from trainers.naive.trainer import naive_trainer
 import torch
-from utils.telemetry.visualisers import plot_loss
+from telemetry.visualisers import plot_loss
 import os
 import numpy as np
 import json

@@ -2,12 +2,12 @@ from data_processing.augmenters import file_splitter, segmented_tokenization
 import os
 import torch
 from tqdm import tqdm
-from utils.tokenizers.tiktokenizer import tiktokenizer
-from utils.modelling.trainers.lazy_batch_trainer.trainer import lazy_batch_trainer
-from utils.modelling.models import LanguageModel
+from tokenizers.tiktokenizer import tiktokenizer
+from trainers.lazy_batch_trainer.trainer import lazy_batch_trainer
+from model.models import LanguageModel
 import numpy as np
 import json
-from utils.telemetry.visualisers import plot_loss
+from telemetry.visualisers import plot_loss
 
 
 def lazy_batch_training(
