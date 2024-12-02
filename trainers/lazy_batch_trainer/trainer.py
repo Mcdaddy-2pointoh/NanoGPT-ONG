@@ -1,7 +1,7 @@
 import torch
 import os
 from tqdm import tqdm
-from utils.modelling.trainers.lazy_batch_trainer.switch import switch
+from trainers.lazy_batch_trainer.switch import switch
 import numpy as np
 from data_processing.augmenters import train_test_splitter, batch_generator
 
