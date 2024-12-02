@@ -1,4 +1,4 @@
-from utils.modelling.attention.self_attention_fns import self_attention_v1, self_attention_v2, self_attention_v3, self_attention_v4
+from sandbox.attention.self_attention_fns import self_attention_v1, self_attention_v2, self_attention_v3, self_attention_v4
 import torch
 
 # Random tensor

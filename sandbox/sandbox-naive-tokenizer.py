@@ -1,4 +1,4 @@
-from utils.tokenizers.naive_tokenizer import naive_tokenizer
+from tokenizers.naive_tokenizer import naive_tokenizer
 import json
 import os
 

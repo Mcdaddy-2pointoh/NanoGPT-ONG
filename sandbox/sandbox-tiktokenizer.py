@@ -1,4 +1,4 @@
-from utils.tokenizers.tiktokenizer import tiktokenizer
+from tokenizers.tiktokenizer import tiktokenizer
 
 tokenizer = tiktokenizer()
 

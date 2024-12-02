@@ -1,10 +1,10 @@
-from utils.pipelines.naive_training import training_pipeline
+from pipelines.training.naive_training import training_pipeline
 
 # Training pipeline
 results = training_pipeline(dir_path="./data/",
               block_size=256,
               batch_size=12,
-              steps=2500,
+              steps=100,
               split_ratio= 0.80,
               save_loss_curves=True,
               learning_rate=3e-4,

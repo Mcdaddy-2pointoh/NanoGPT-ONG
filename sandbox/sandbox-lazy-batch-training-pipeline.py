@@ -1,10 +1,10 @@
-from utils.pipelines.lazy_batch_training import lazy_batch_training
+from pipelines.training.lazy_batch_training import lazy_batch_training
 
 # Data Params
-data_path = "./data/ROOTS.txt"
+data_path = "./data_archive/ROOTS.txt"
 file_splitter_params = {
-    'segment_target_dir' : './data/segments/', 
-    'array_target_dir' : './data/arrays/', 
+    'segment_target_dir' : './data_archive/segments/', 
+    'array_target_dir' : './data_archive/arrays/', 
     'split_threshold' : 200_000, 
     'verbose' : False, 
     'file_encoding' : 'utf-8', 
@@ -28,14 +28,14 @@ model_params = {
 
 # Model check pointing params
 check_point_params = {
-    'save_steps' : 500
+    'save_steps' : 20
 }
 
 # Training params
 training_params = {
     "learning_rate" : 1e-3,
     "batch_size" : 12,
-    "steps" : 10_000
+    "steps" : 100
 }
 
 # Computational Device
