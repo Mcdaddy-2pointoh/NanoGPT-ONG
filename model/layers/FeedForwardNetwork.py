@@ -7,14 +7,14 @@ class FeedForward(nn.Module):
     A single MLP followed by non-linearity
     """
 
-    def __init__(self, attention_head_size: int = 16, dropout: float = 0.2, device: str=None):
+    def __init__(self, attention_size: int = 16, dropout: float = 0.2, device: str=None):
         super().__init__()
 
         # Validate attention head size 
         try:
-            attention_head_size = int(attention_head_size)
+            attention_size = int(attention_size)
         except Exception as e:
-            raise TypeError("The argument `attention_head_size` must be of type int.") from e
+            raise TypeError("The argument `attention_size` must be of type int.") from e
         
 
         # Determine the device type
@@ -28,9 +28,9 @@ class FeedForward(nn.Module):
         device = self.device
 
         self.net = nn.Sequential(
-            nn.Linear(attention_head_size, attention_head_size * 4),
+            nn.Linear(attention_size, attention_size * 4),
             nn.GELU(),
-            nn.Linear(attention_head_size * 4, attention_head_size),
+            nn.Linear(attention_size * 4, attention_size),
             nn.Dropout(dropout)
         ).to(device=device)
 

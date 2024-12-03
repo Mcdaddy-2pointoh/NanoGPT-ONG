@@ -270,8 +270,8 @@ def lazy_batch_training(
     elif not isinstance(model_params, dict):
         raise TypeError("Argument `model_params` must be of type dict")
 
-    elif not set(list(model_params.keys())).issuperset(set(['block_size', 'n_embedd', 'attention_head_size', 'num_heads', 'num_layers', 'dropout', 'positional_encoder_type'])):
-        raise ValueError("Argument `model_params` must be a dictionary with the following keys 'block_size', 'n_embedd', 'attention_head_size', 'num_heads', 'num_layers', 'dropout', 'positional_encoder_type'")
+    elif not set(list(model_params.keys())).issuperset(set(['block_size', 'n_embedd', 'attention_size', 'num_heads', 'num_layers', 'dropout', 'positional_encoder_type'])):
+        raise ValueError("Argument `model_params` must be a dictionary with the following keys 'block_size', 'n_embedd', 'attention_size', 'num_heads', 'num_layers', 'dropout', 'positional_encoder_type'")
             
     # Initialise a model class
     try:
@@ -279,7 +279,7 @@ def lazy_batch_training(
             vocab_size=tokenizer_vocab_size,
             block_size=model_params['block_size'],
             n_embedd=model_params['n_embedd'],
-            attention_head_size=model_params['attention_head_size'],
+            attention_size=model_params['attention_size'],
             num_heads=model_params['num_heads'],
             num_layers=model_params['num_layers'],
             dropout=model_params['dropout'],
@@ -361,7 +361,7 @@ def lazy_batch_training(
         "max_tokens": model_params['block_size'],
         "learning_rate": training_params['learning_rate'],
         "n_embedd": model_params['n_embedd'],
-        "attention_head_size": model_params['attention_head_size'],
+        "attention_size": model_params['attention_size'],
         "dropout": model_params['dropout'],
         "num_layers": model_params['num_layers'],
         "num_heads": model_params['num_heads'],

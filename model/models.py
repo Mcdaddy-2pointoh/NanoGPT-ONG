@@ -8,7 +8,16 @@ from positional_encoders.sinusoidal_positional_encoding import SinusoidalPositio
 # Model class
 class LanguageModel(nn.Module):
     
-    def __init__(self, vocab_size: int, block_size: int, n_embedd: int = 32, device: str = None, attention_head_size: int = 32, num_heads: int = 4, num_layers: int = 6, dropout: float = 0.2, positional_encoder_type: str = "sinusoidal"):
+    def __init__(self, 
+                 vocab_size: int, 
+                 block_size: int, 
+                 n_embedd: int = 32, 
+                 device: str = None, 
+                 attention_size: int = 32, 
+                 num_heads: int = 4, 
+                 num_layers: int = 6, 
+                 dropout: float = 0.2, 
+                 positional_encoder_type: str = "sinusoidal"):
         """
         Function: Instances an object of class `LanguageModel`
         Args:
@@ -16,8 +25,10 @@ class LanguageModel(nn.Module):
             block_size (int): Block size is the maximum context window of the model
             n_embedd (int): Linear dimension in which the token in projected into
             device (str): The device on which the operation must be carried out `cuda` or `cpu`
-            attention_head_size (int): The projection dimension of all attention heads combined
+            attention_size (int): The projection dimension of all attention heads combined
             num_heads (int): Number of parallel heads to implement,
+            num_layers (int): Number of Sequential Decoders to place
+            dropout (float): Dropout value to be set in the model layers
             positional_encoder_type (Enum(str)): Either has conventional linear postional encoding or sinusoidal positional encoding
         """
         super().__init__()
@@ -45,6 +56,10 @@ class LanguageModel(nn.Module):
         # Set `positional_encoder_type` to sinusoidal
         elif positional_encoder_type == "sinusoidal":
             self.positional_encoder_type = "sinusoidal"
+
+        # Set `positional_encoder_type` to RoPE
+        elif positional_encoder_type == "RoPE":
+            self.positional_encoder_type = "RoPE"
 
         # Else key `positional_encoder_type` is out of bounds raise error
         else:
@@ -78,11 +93,11 @@ class LanguageModel(nn.Module):
         self.token_embedding_table = nn.Embedding(vocab_size, n_embedd).to(device=device)
 
         # Validating attention params
-        if not isinstance(attention_head_size, int):
+        if not isinstance(attention_size, int):
             try:
-                attention_head_size = int(attention_head_size)
+                attention_size = int(attention_size)
             except Exception as e:
-                raise TypeError("Argument `attention_head_size` must be of type int.")  from e
+                raise TypeError("Argument `attention_size` must be of type int.")  from e
             
         if not isinstance(num_heads, int):
             try:
@@ -90,23 +105,23 @@ class LanguageModel(nn.Module):
             except Exception as e:
                 raise TypeError("Argument `num_heads` must be of type int.")  from e
 
-        if attention_head_size % num_heads != 0:
+        if attention_size % num_heads != 0:
             raise ValueError("Attention heads size must be a multiple of the number of attention heads")
         
         # Setting up attention params
-        self.attention_head_size = attention_head_size
+        self.attention_size = attention_size
         self.num_heads = num_heads
 
         # Setting up attention heads splitting the number of attention size over the n heads
         self.blocks = nn.Sequential(
-            *[Block(num_heads = num_heads, n_embedd=n_embedd, block_size=block_size, device=device, attention_head_size=attention_head_size, dropout=dropout) for _ in range(num_layers)] 
+            *[Block(num_heads = num_heads, n_embedd=n_embedd, block_size=block_size, device=device, attention_size=attention_size, dropout=dropout) for _ in range(num_layers)] 
         )
 
         # Layer norm
-        self.ln = nn.LayerNorm(attention_head_size)
+        self.ln = nn.LayerNorm(attention_size)
 
         # Pass the value to the LM head to get the token out
-        self.lm_head = nn.Linear(attention_head_size, vocab_size)
+        self.lm_head = nn.Linear(attention_size, vocab_size)
 
     def forward(self, idx: torch.Tensor, targets: torch.Tensor = None):
         """
@@ -136,15 +151,34 @@ class LanguageModel(nn.Module):
         if self.positional_encoder_type == "naive":
             positional_indices = torch.arange(T).to(device=self.device)
             positional_embeddings = self.position_embedding_table(positional_indices) # (T,C)
+            
+            # Combine the two embeddings to get our input tensor
+            x = token_embeddings + positional_embeddings
 
+            del token_embeddings
+            del positional_embeddings
+
+        # If sinusoidal positional encoding
         elif self.positional_encoder_type == "sinusoidal":
             positional_embeddings = SinusoidalPositionalEncoding(T=T, n_embedd=self.n_embedd, device=self.device)
+
+            # Combine the two embeddings to get our input tensor
+            x = token_embeddings + positional_embeddings
+
+            del token_embeddings
+            del positional_embeddings
+
+        # If RoPE encoding
+        # The positional encoding occurs in the attention mechanism
+        # We just pass the token embeddings 
+        elif self.positional_encoder_type == "RoPE":
+            x = token_embeddings
+            del token_embeddings
         
+        # Else raise error
         else:
             raise RuntimeError("Could not encode Positions, pleaase check `positional_encoder_type` in params")
 
-        # Combine the two embeddings to get our input tensor
-        x = token_embeddings + positional_embeddings
 
         # Sequentially run multi-headed attention multiple times
         x = self.blocks(x)

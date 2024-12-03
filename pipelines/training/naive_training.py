@@ -12,7 +12,7 @@ import numpy as np
 import json
 
 # Training Pipeline
-def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=300, save_loss_curves: bool = True, learning_rate: float = 1e-3, n_embedd: int = 32, attention_head_size: int = 32, dropout: float = 0.20, num_layers: int = 6, num_heads: int = 4, tokenizer_type: str = "tiktoken", tokenizer_encoding: str = "", runs_dir: str = "./runs", smoothen_loss_plots: bool = False, positional_encoder_type: str= "sinusoidal"):
+def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_tokens=300, save_loss_curves: bool = True, learning_rate: float = 1e-3, n_embedd: int = 32, attention_size: int = 32, dropout: float = 0.20, num_layers: int = 6, num_heads: int = 4, tokenizer_type: str = "tiktoken", tokenizer_encoding: str = "", runs_dir: str = "./runs", smoothen_loss_plots: bool = False, positional_encoder_type: str= "sinusoidal"):
     """
     Function: training_pipeline pipeline to train 
     Args:
@@ -25,7 +25,7 @@ def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_
         save_loss_curves(bool): Saves the loss curve as a png in the directory (./runs/run_number/loss-logs)
         learning_rate(float): Learning rate fed to the optimizer
         n_embedd (int): Linear dimension in which the token in projected into
-        attention_head_size (int): The projection dimension of all attention heads combined
+        attention_size (int): The projection dimension of all attention heads combined
         dropout (1> float >0): The dropout ratio 
         num_layers (int): The number of replicated decoder only blocks
         num_heads (int): Number of attention heads to parallelize the attention mechanism
@@ -133,7 +133,7 @@ def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_
                                 block_size=block_size, 
                                 n_embedd=n_embedd,
                                 device=device,
-                                attention_head_size=attention_head_size,
+                                attention_size=attention_size,
                                 num_heads= num_heads,
                                 num_layers=num_layers,
                                 dropout = dropout,
@@ -170,7 +170,7 @@ def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_
         "max_tokens": max_tokens,
         "learning_rate": learning_rate,
         "n_embedd": n_embedd,
-        "attention_head_size": attention_head_size,
+        "attention_size": attention_size,
         "dropout": dropout,
         "num_layers": num_layers,
         "num_heads": num_heads,

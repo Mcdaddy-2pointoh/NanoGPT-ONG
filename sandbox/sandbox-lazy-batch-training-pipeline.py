@@ -15,11 +15,11 @@ file_splitter_params = {
 tokenizer_encoding = "cl100k_base"
 tokenizer_vocab_size = 100_280
 
-# Model Params  'block_size', 'n_embedd', 'attention_head_size', 'num_heads', 'num_layers', 'dropout', 'positional_encoder_type'
+# Model Params  'block_size', 'n_embedd', 'attention_size', 'num_heads', 'num_layers', 'dropout', 'positional_encoder_type'
 model_params = {
     'block_size' : 256,
     'n_embedd' : 128,
-    'attention_head_size': 128,
+    'attention_size': 128,
     'num_heads': 4,
     'num_layers' : 6,
     'dropout': 0.20,
@@ -35,7 +35,7 @@ check_point_params = {
 training_params = {
     "learning_rate" : 1e-3,
     "batch_size" : 12,
-    "steps" : 100
+    "steps" : 115
 }
 
 # Computational Device
