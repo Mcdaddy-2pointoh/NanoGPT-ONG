@@ -24,6 +24,23 @@ def lazy_batch_training(
     smoothen_loss_plots: bool = True,
     save_loss_curves: bool = True
 ):
+    """
+    Function: A Pipeline that executes a trainer that can segment a large training text file into multiple smaller text files and saves it. 
+            The pipeline then pre-tokenzes the data and stores it into the secondary memory. The training loop sequentially picks up each tokenized segment and train the model.
+            The pipeline also has checkpointing feature and loss eval too.
+
+    Args:
+        data (str): Path to the single text file
+        file_splittter_params (dict): Dictionary defining the parameters to spilt the files into smaller segments. Contains keys ['segment_target_dir', 'array_target_dir',  'split_threshold', 'verbose', 'file_encoding', 'write_frequency']
+        tokenizer_encoding (str): The class of BPE tokenizer to use from tiktoken
+        tokenizer_vocab_size (int): Number of unique tokens in the `tokenizer_encoding`
+        model_params (dict): Dictionary defining the model architecture and layer sizes, for the decoder only language model. Contains keys ['block_size', 'n_embedd', 'attention_size', 'num_heads', 'num_layers', 'dropout', 'positional_encoder_type']
+        training_param (dict): Dictionary defining the training setup of the model. Contains keys ['learning_rate', 'batch_size', 'steps']
+        runs_dir (str): Path to the checkpointing directory
+        device (str): The device to perfrom compute on 
+        smoothen_loss_plots (bool): Smoothen the loss curve while plotting the train loss
+        save_loss_curves(bool): Saves the loss curve as a png in the checkpointing directory
+    """
     
     # SETTING UP RUNS
     # Create a directory to store all runs metadata
@@ -147,7 +164,7 @@ def lazy_batch_training(
                     else:
                         raise ValueError("Invalid value typed in expected str 'Y' or 'N'")
 
-            # If file is empty just begin partitioning
+            # Target directory is empty just begin partitioning
             else:
                 try:
                     print("Please monitor CPU stats while splitting files")
