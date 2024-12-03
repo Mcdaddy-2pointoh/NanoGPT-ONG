@@ -51,9 +51,13 @@ def lazy_batch_trainer(dir_path: str, model: torch.nn.Module, optimizer, batch_s
             # Total segment files
             total_segments = len(array_files)
 
-            # Change frequency 
-            change_frequency =  steps // total_segments
-
+            # Rise error if training steps are less than the total segments to train on
+            if steps < total_segments:
+                raise ValueError("Argument `steps` must be greater than total segments")
+            
+            # Else define a change frequency
+            else:
+                change_frequency =  steps // total_segments
 
             # Inital params 
             loss = None
