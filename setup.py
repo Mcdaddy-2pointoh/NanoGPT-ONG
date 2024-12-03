@@ -2,10 +2,10 @@ from setuptools import setup, find_packages
 
 setup(
     name='nano_gpt',
-    version='0.1',
+    version='0.2',
     packages=find_packages(),
     include_package_data=True,
-    description="An attempt to follow Andrej Karapathy's [Let's build GPT: from scratch](https://www.youtube.com/watch?v=kCc8FmEb1nY). In order to better understand 'Attention is all you need' and the transformers architecture that is the corner stone of GenAI.",
+    description="Building a Language model at low cost with coherent speech and rational output",
     author='Sharvil Dandekar',
     author_email='sharvil.dandekar@gmail.com',
     url='https://your-url.com',
