@@ -115,7 +115,8 @@ def training_pipeline(dir_path, block_size, batch_size, split_ratio, steps, max_
 
     # Else key `positional_encoder_type` is out of bounds raise error
     else:
-        raise ValueError("Argument `positional_encoder_type` must be either 'sinusoidal' or 'naive'")
+        raise ValueError("Argument `positional_encoder_type` must be either 'RoPE', 'sinusoidal' or 'naive'")
+
     
     # Split the data into train test split & Create input and output tensors
     try: 
