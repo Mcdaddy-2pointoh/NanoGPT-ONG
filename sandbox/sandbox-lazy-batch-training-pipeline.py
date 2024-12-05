@@ -17,25 +17,25 @@ tokenizer_vocab_size = 100_280
 
 # Model Params  'block_size', 'n_embedd', 'attention_size', 'num_heads', 'num_layers', 'dropout', 'positional_encoder_type'
 model_params = {
-    'block_size' : 256,
+    'block_size' : 512,
     'n_embedd' : 128,
     'attention_size': 128,
-    'num_heads': 4,
+    'num_heads': 8,
     'num_layers' : 6,
     'dropout': 0.20,
-    'positional_encoder_type' : 'sinusoidal'
+    'positional_encoder_type' : 'RoPE'
 }
 
 # Model check pointing params
 check_point_params = {
-    'save_steps' : 20
+    'save_steps' : 500
 }
 
 # Training params
 training_params = {
     "learning_rate" : 1e-3,
-    "batch_size" : 12,
-    "steps" : 115
+    "batch_size" : 6,
+    "steps" : 15_000
 }
 
 # Computational Device
