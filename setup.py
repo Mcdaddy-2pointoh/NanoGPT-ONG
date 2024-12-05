@@ -8,7 +8,7 @@ setup(
     description="Building a Language model at low cost with coherent speech and rational output",
     author='Sharvil Dandekar',
     author_email='sharvil.dandekar@gmail.com',
-    url='https://your-url.com',
+    url='https://sharvil-dandekar.vercel.app',
     install_requires=[
         "filelock==3.16.1",
         "fsspec==2024.9.0",
