@@ -1,6 +1,7 @@
 import torch 
 from torch import nn
 from torch.nn import functional as F
+from positional_encoders.rotary_positional_encoding import RotaryPositionEncoding
 
 # Self attention head 
 class Head(nn.Module):
@@ -8,7 +9,7 @@ class Head(nn.Module):
     Class:  One head of self attention
     """
 
-    def __init__(self, block_size: int, n_embedd: int = 32, device: str = None, attention_head_size: int = 16, dropout: float = 0.20):
+    def __init__(self, block_size: int, n_embedd: int = 32, device: str = None, attention_head_size: int = 16, dropout: float = 0.20, positional_encoder_type: str = None):
         """
         Function: Instances an object of class `Head`
         Args:
@@ -40,6 +41,26 @@ class Head(nn.Module):
         self.query = nn.Linear(n_embedd, attention_head_size, bias=False, device=device)
         self.register_buffer("tril", torch.tril(torch.ones((block_size, block_size))).to(device=device))
 
+        # Set the position Encoding Params
+        if not isinstance(positional_encoder_type, str):
+            raise TypeError("Argument `positional_encoder_type` must be of type str")
+        
+        # Set `positional_encoder_type` to naive
+        elif positional_encoder_type == "naive":
+            self.positional_encoder_type = "naive"
+
+        # Set `positional_encoder_type` to sinusoidal
+        elif positional_encoder_type == "sinusoidal":
+            self.positional_encoder_type = "sinusoidal"
+
+        # Set `positional_encoder_type` to RoPE
+        elif positional_encoder_type == "RoPE":
+            self.positional_encoder_type = "RoPE"
+
+        # Else key `positional_encoder_type` is out of bounds raise error
+        else:
+            raise ValueError("Argument `positional_encoder_type` must be either 'RoPE', 'sinusoidal' or 'naive'")
+
         # Dropout params
         self.dropout = dropout
         self.Dropout = nn.Dropout(dropout).to(device=device)
@@ -56,8 +77,14 @@ class Head(nn.Module):
 
         # produce the key and query vectors for every token at time step in x
         k = self.key(x) # size (B, T, attention_head_size)
-        kt = k.transpose(-2, -1).to(device=self.device) # size (B, attention_head_size, T)
         q = self.query(x) # size (B, T, attention_head_size)
+
+
+        # If the positional_encoder_type is RoPE compute the rotated q, k
+        if self.positional_encoder_type == "RoPE":
+            q, k  = RotaryPositionEncoding(q, k, T, self.attention_head_size, device=self.device) # size (B, T, attention_head_size)
+
+        kt = k.transpose(-2, -1).to(device=self.device) # size (B, attention_head_size, T)
 
         # Compute the attention scores
         wei = q @ kt * C **-0.5 # (B, T, attention_head_size) @ (B, attention_head_size, T) ------> (B, T, T)

@@ -29,7 +29,7 @@ class LanguageModel(nn.Module):
             num_heads (int): Number of parallel heads to implement,
             num_layers (int): Number of Sequential Decoders to place
             dropout (float): Dropout value to be set in the model layers
-            positional_encoder_type (Enum(str)): Either has conventional linear postional encoding or sinusoidal positional encoding
+            positional_encoder_type (Enum(str)): Either has conventional linear postional encoding, RoPE or sinusoidal positional encoding
         """
         super().__init__()
 
@@ -63,7 +63,7 @@ class LanguageModel(nn.Module):
 
         # Else key `positional_encoder_type` is out of bounds raise error
         else:
-            raise ValueError("Argument `positional_encoder_type` must be either 'sinusoidal' or 'naive'")
+            raise ValueError("Argument `positional_encoder_type` must be either 'RoPE', 'sinusoidal' or 'naive'")
 
         # Validating model params
         if not isinstance(n_embedd, int):
@@ -114,7 +114,7 @@ class LanguageModel(nn.Module):
 
         # Setting up attention heads splitting the number of attention size over the n heads
         self.blocks = nn.Sequential(
-            *[Block(num_heads = num_heads, n_embedd=n_embedd, block_size=block_size, device=device, attention_size=attention_size, dropout=dropout) for _ in range(num_layers)] 
+            *[Block(num_heads = num_heads, n_embedd=n_embedd, block_size=block_size, device=device, attention_size=attention_size, dropout=dropout, positional_encoder_type=positional_encoder_type) for _ in range(num_layers)] 
         )
 
         # Layer norm
@@ -178,7 +178,6 @@ class LanguageModel(nn.Module):
         # Else raise error
         else:
             raise RuntimeError("Could not encode Positions, pleaase check `positional_encoder_type` in params")
-
 
         # Sequentially run multi-headed attention multiple times
         x = self.blocks(x)

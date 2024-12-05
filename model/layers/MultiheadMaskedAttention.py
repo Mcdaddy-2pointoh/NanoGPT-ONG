@@ -8,7 +8,15 @@ class MultiHeadAttention(nn.Module):
     Class: Implements multiple heads of self attention
     """
 
-    def __init__(self, num_heads: int, block_size: int, n_embedd: int = 32, device: str = None, attention_head_size: int = 16, dropout: float = 0.2):
+    def __init__(self, 
+                 num_heads: int, 
+                 block_size: int, 
+                 n_embedd: int = 32, 
+                 device: str = None, 
+                 attention_head_size: int = 16, 
+                 dropout: float = 0.2,
+                 positional_encoder_type: str = None
+                 ):
         """
         Function: Instances an object of class `MultiHeadAttention`
         Args:
@@ -18,6 +26,7 @@ class MultiHeadAttention(nn.Module):
             device (str): The device on which the operation must be carried out `cuda` or `cpu`
             attention_head_size (int): The projection dimension of each individual attention head
             dropout (0 < float < 1): The value of dropout to be applied at layer
+            positional_encoder_type (Enum(str)): Either has conventional linear postional encoding, RoPE or sinusoidal positional encoding
         """
         super().__init__()
 
@@ -25,6 +34,27 @@ class MultiHeadAttention(nn.Module):
         self.attention_head_size = attention_head_size
         self.n_embedd = n_embedd
         self.block_size = block_size
+
+        # Set the position Encoding Params
+        if not isinstance(positional_encoder_type, str):
+            raise TypeError("Argument `positional_encoder_type` must be of type str")
+        
+        # Set `positional_encoder_type` to naive
+        elif positional_encoder_type == "naive":
+            self.positional_encoder_type = "naive"
+
+        # Set `positional_encoder_type` to sinusoidal
+        elif positional_encoder_type == "sinusoidal":
+            self.positional_encoder_type = "sinusoidal"
+
+        # Set `positional_encoder_type` to RoPE
+        elif positional_encoder_type == "RoPE":
+            self.positional_encoder_type = "RoPE"
+
+        # Else key `positional_encoder_type` is out of bounds raise error
+        else:
+            raise ValueError("Argument `positional_encoder_type` must be either 'RoPE', 'sinusoidal' or 'naive'")
+
 
         # Defining the number of attention heads
         self.num_heads = num_heads
@@ -40,7 +70,7 @@ class MultiHeadAttention(nn.Module):
         device = self.device
 
         # Specifying the heads 
-        self.heads = nn.ModuleList([Head(block_size=block_size, n_embedd=n_embedd, device=device, attention_head_size=attention_head_size, dropout=dropout)] * num_heads)
+        self.heads = nn.ModuleList([Head(block_size=block_size, n_embedd=n_embedd, device=device, attention_head_size=attention_head_size, dropout=dropout, positional_encoder_type=positional_encoder_type)] * num_heads)
 
         # Projection of self attention to prepare for the residual skips
         self.proj = nn.Linear(n_embedd, n_embedd).to(device=device)
