@@ -1,4 +1,6 @@
 import os
+import numpy as np
+from tqdm import tqdm
 
 # Load data
 def text_data_loader(dir: str, encoding: str = "utf8"):
@@ -36,3 +38,23 @@ def text_data_loader(dir: str, encoding: str = "utf8"):
                 raise RuntimeError("Error Reading the file check for the encoding format.")
 
         return text
+    
+def data_size_cal(path: str):
+    """
+    Function: Takes in a string path and loads all .npy files in the path to calculate the total tokens passed to the model
+    Args:
+        path: A string path to a directory containing .npy files of tokenized data
+    """
+
+    if not os.path.isdir(path):
+        raise FileNotFoundError(f"Directory `{path}` not found")
+    
+    else:
+        token_count = 0
+        for file in tqdm(os.listdir(path)):
+            if file.endswith(".npy"):
+                x = np.load(os.path.join(path, file))
+                token_count += len(x)
+                del x
+
+        return token_count
