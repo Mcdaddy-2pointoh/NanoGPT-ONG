@@ -352,24 +352,9 @@ def lazy_batch_training(
     
     # Change check_point_params
     check_point_params['save_dir'] = f"{runs_dir}/run-{run_number}/checkpoints"
-    
-    # Parsing the model and optimizer to the training theory
-    model, losses = lazy_batch_trainer(dir_path=array_directory,
-                                       model=model,
-                                       optimizer=optimizer,
-                                       batch_size=training_params['batch_size'],
-                                       block_size=model_params['block_size'],
-                                       steps=training_params['steps'],
-                                       device=device,
-                                       check_point_params=check_point_params,
-                                       train_ratio=0.95)
-    
-    # Save loss to a directory
-    if save_loss_curves:
-        plot_loss(losses, f"{runs_dir}/run-{run_number}/loss-logs", smoothen=smoothen_loss_plots)
 
     # Save model, optimizer and params
-        # Model Params
+    # Model Params
     model_params = {
         "block_size": model_params['block_size'],
         "batch_size": training_params['batch_size'],
@@ -387,6 +372,23 @@ def lazy_batch_training(
         "vocab_size" : tokenizer_vocab_size,
         "positional_encoder_type" : model_params['positional_encoder_type']
     }
+    
+    # Parsing the model and optimizer to the training theory
+    model, losses = lazy_batch_trainer(dir_path=array_directory,
+                                       model=model,
+                                       optimizer=optimizer,
+                                       batch_size=training_params['batch_size'],
+                                       block_size=model_params['block_size'],
+                                       steps=training_params['steps'],
+                                       device=device,
+                                       check_point_params=check_point_params,
+                                       train_ratio=0.95,
+                                       model_params=model_params)
+    
+    # Save loss to a directory
+    if save_loss_curves:
+        plot_loss(losses, f"{runs_dir}/run-{run_number}/loss-logs", smoothen=smoothen_loss_plots)
+
     torch.save(model.state_dict(), f"{runs_dir}/run-{run_number}/model/LanguageModel.pt")
     torch.save(optimizer.state_dict(), f"{runs_dir}/run-{run_number}/model/Optimizer.pt")
     with open (f"{runs_dir}/run-{run_number}/model/params.json", "w") as f:
