@@ -6,6 +6,9 @@ data
 data_archive
 archive
 
+# ML Flow ignore runs
+mlruns
+
 # Pycache
 __pycache__
 

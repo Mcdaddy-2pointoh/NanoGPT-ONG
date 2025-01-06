@@ -1,4 +1,4 @@
-from pipelines.training.lazy_batch_training import lazy_batch_training
+from pipelines.training.lazy_batch_training import lazy_batch_training 
 
 # Data Params
 data_path = "./data_archive/ROOTS.txt"
@@ -28,14 +28,19 @@ model_params = {
 
 # Model check pointing params
 check_point_params = {
-    'save_steps' : 500
+    'save_steps' : 500,
+    "log_to_mlflow" : True,
+    "mlflow_experiment_name": "",
+    "mlflow_tracking_uri" :  "",
+    "mlflow_model_name" : "",
+    "dataset_name" : ""
 }
 
 # Training params
 training_params = {
     "learning_rate" : 1e-3,
     "batch_size" : 6,
-    "steps" : 15_000
+    "steps" : 15_000,
 }
 
 # Computational Device
