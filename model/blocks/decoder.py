@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 from model.layers.MultiheadMaskedAttention import MultiHeadAttention
 from model.layers.FeedForwardNetwork import FeedForward
+import warnings
 
 class Block(nn.Module):
     """
@@ -16,7 +17,8 @@ class Block(nn.Module):
                  device: str = None, 
                  attention_size: int = 16, 
                  dropout: float = 0.2,
-                 positional_encoder_type: str = None
+                 positional_encoder_type: str = None,
+                 model_precision = torch.float32
                  ):
         """
         Function: Instances an object of class `MultiHeadAttention`
@@ -27,6 +29,7 @@ class Block(nn.Module):
             device (str): The device on which the operation must be carried out `cuda` or `cpu`
             attention_size (int): The projection dimension of all attention heads combined
             dropout (float): The value of dropout to be added at end of each layer
+            model_precision : Define the model float precision
             positional_encoder_type (Enum(str)): Either has conventional linear postional encoding, RoPE or sinusoidal positional encoding
         """
         super().__init__()
@@ -52,19 +55,27 @@ class Block(nn.Module):
         else:
             raise ValueError("Argument `positional_encoder_type` must be either 'RoPE', 'sinusoidal' or 'naive'")
 
+        # Set model precision to default with a warning
+        if model_precision not in [torch.float32, torch.float64, torch.float16, torch.bfloat16]:
+            warnings.warn("Defaulting to torch.float32, {model_precision} is not a valid dtype")
+            self.model_precision = torch.float32
+
+        else:
+            self.model_precision = model_precision
+
+        model_precision = self.model_precision
 
         # Attention params and methods
         individual_head_size = attention_size//num_heads
         self.individual_head_size = individual_head_size
-        self.attention_head = MultiHeadAttention(num_heads = num_heads, n_embedd=n_embedd, block_size=block_size, device=device, attention_head_size=individual_head_size, dropout = dropout, positional_encoder_type=positional_encoder_type)
+        self.attention_head = MultiHeadAttention(num_heads = num_heads, n_embedd=n_embedd, block_size=block_size, device=device, attention_head_size=individual_head_size, dropout = dropout, positional_encoder_type=positional_encoder_type, model_precision=model_precision)
         
         # Feed forward params and methods
-        self.ffn = FeedForward(attention_size=attention_size, dropout = dropout)
+        self.ffn = FeedForward(attention_size=attention_size, dropout = dropout, device=device, model_precision=model_precision)
 
         # Layer normalisation
-        self.ln1 = nn.LayerNorm(attention_size)
-        self.ln2 = nn.LayerNorm(attention_size)
-
+        self.ln1 = nn.LayerNorm(attention_size).to(device=device, dtype=model_precision)
+        self.ln2 = nn.LayerNorm(attention_size).to(device=device, dtype=model_precision)
 
     def forward(self, x):
         """
@@ -72,6 +83,7 @@ class Block(nn.Module):
         Args:
             x (torch.Tensor): Input params of the model 
         """
+        x = x.to(dtype=self.model_precision)
         x = x + self.attention_head(self.ln1(x))
         x = x + self.ffn(self.ln2(x))
 
