@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from positional_encoders.rotary_positional_encoding import RotaryPositionEncoding
+import warnings
 
 # Self attention head 
 class Head(nn.Module):
@@ -9,7 +10,7 @@ class Head(nn.Module):
     Class:  One head of self attention
     """
 
-    def __init__(self, block_size: int, n_embedd: int = 32, device: str = None, attention_head_size: int = 16, dropout: float = 0.20, positional_encoder_type: str = None):
+    def __init__(self, block_size: int, n_embedd: int = 32, device: str = None, attention_head_size: int = 16, dropout: float = 0.20, positional_encoder_type: str = None, model_precision = torch.float32):
         """
         Function: Instances an object of class `Head`
         Args:
@@ -18,6 +19,7 @@ class Head(nn.Module):
             device (str): The device on which the operation must be carried out `cuda` or `cpu`
             attention_head_size (int): The projection dimension of each individual attention head
             dropout (0 < float < 1): The value of dropout to be applied at layer
+            model_precision : Define the model float precision
         """
 
         super().__init__()
@@ -35,11 +37,21 @@ class Head(nn.Module):
 
         device = self.device
 
+        # Set model precision to default with a warning
+        if model_precision not in [torch.float32, torch.float64, torch.float16, torch.bfloat16]:
+            warnings.warn("Defaulting to torch.float32, {model_precision} is not a valid dtype")
+            self.model_precision = torch.float32
+
+        else:
+            self.model_precision = model_precision
+
+        model_precision = self.model_precision 
+
         # Set attention parameters
-        self.key = nn.Linear(n_embedd, attention_head_size, bias=False, device=device)
-        self.value = nn.Linear(n_embedd, attention_head_size, bias=False, device=device)
-        self.query = nn.Linear(n_embedd, attention_head_size, bias=False, device=device)
-        self.register_buffer("tril", torch.tril(torch.ones((block_size, block_size))).to(device=device))
+        self.key = nn.Linear(n_embedd, attention_head_size, bias=False, device=device, dtype=model_precision)
+        self.value = nn.Linear(n_embedd, attention_head_size, bias=False, device=device, dtype=model_precision)
+        self.query = nn.Linear(n_embedd, attention_head_size, bias=False, device=device, dtype=model_precision)
+        self.register_buffer("tril", torch.tril(torch.ones((block_size, block_size))).to(device=device, dtype=model_precision))
 
         # Set the position Encoding Params
         if not isinstance(positional_encoder_type, str):
@@ -63,7 +75,7 @@ class Head(nn.Module):
 
         # Dropout params
         self.dropout = dropout
-        self.Dropout = nn.Dropout(dropout).to(device=device)
+        self.Dropout = nn.Dropout(dropout).to(device=device, dtype=model_precision)
 
     def forward(self, x):
         """
@@ -82,9 +94,9 @@ class Head(nn.Module):
 
         # If the positional_encoder_type is RoPE compute the rotated q, k
         if self.positional_encoder_type == "RoPE":
-            q, k  = RotaryPositionEncoding(q, k, T, self.attention_head_size, device=self.device) # size (B, T, attention_head_size)
+            q, k  = RotaryPositionEncoding(q, k, T, self.attention_head_size, device=self.device, model_precision=self.model_precision) # size (B, T, attention_head_size)
 
-        kt = k.transpose(-2, -1).to(device=self.device) # size (B, attention_head_size, T)
+        kt = k.transpose(-2, -1).to(device=self.device, dtype=self.model_precision) # size (B, attention_head_size, T)
 
         # Compute the attention scores
         wei = q @ kt * C **-0.5 # (B, T, attention_head_size) @ (B, attention_head_size, T) ------> (B, T, T)
@@ -98,6 +110,7 @@ class Head(nn.Module):
 
         # Perform weighted aggregation
         out = wei @ self.value(x)
+        out = out.to(dtype=self.model_precision)
 
         return out
 

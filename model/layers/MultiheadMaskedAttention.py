@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from model.layers.MaskedAttention import Head
+import warnings
 
 class MultiHeadAttention(nn.Module):
     """
@@ -15,7 +16,8 @@ class MultiHeadAttention(nn.Module):
                  device: str = None, 
                  attention_head_size: int = 16, 
                  dropout: float = 0.2,
-                 positional_encoder_type: str = None
+                 positional_encoder_type: str = None,
+                 model_precision = torch.float32
                  ):
         """
         Function: Instances an object of class `MultiHeadAttention`
@@ -26,6 +28,7 @@ class MultiHeadAttention(nn.Module):
             device (str): The device on which the operation must be carried out `cuda` or `cpu`
             attention_head_size (int): The projection dimension of each individual attention head
             dropout (0 < float < 1): The value of dropout to be applied at layer
+            model_precision : Define the model float precision
             positional_encoder_type (Enum(str)): Either has conventional linear postional encoding, RoPE or sinusoidal positional encoding
         """
         super().__init__()
@@ -68,16 +71,24 @@ class MultiHeadAttention(nn.Module):
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         device = self.device
+    
+        # Set model precision to default with a warning
+        if model_precision not in [torch.float32, torch.float64, torch.float16, torch.bfloat16]:
+            warnings.warn("Defaulting to torch.float32, {model_precision} is not a valid dtype")
+            self.model_precision = torch.float32
+
+        else:
+            self.model_precision = model_precision
 
         # Specifying the heads 
-        self.heads = nn.ModuleList([Head(block_size=block_size, n_embedd=n_embedd, device=device, attention_head_size=attention_head_size, dropout=dropout, positional_encoder_type=positional_encoder_type)] * num_heads)
+        self.heads = nn.ModuleList([Head(block_size=block_size, n_embedd=n_embedd, device=device, attention_head_size=attention_head_size, dropout=dropout, positional_encoder_type=positional_encoder_type, model_precision=model_precision)] * num_heads)
 
         # Projection of self attention to prepare for the residual skips
-        self.proj = nn.Linear(n_embedd, n_embedd).to(device=device)
+        self.proj = nn.Linear(n_embedd, n_embedd).to(device=device, dtype=model_precision)
 
         # Dropout params and layer
         self.dropout = dropout
-        self.Dropout = nn.Dropout(dropout).to(device=device)
+        self.Dropout = nn.Dropout(dropout).to(device=device, dtype=model_precision)
 
     def forward(self, x):
         """
@@ -86,12 +97,15 @@ class MultiHeadAttention(nn.Module):
             x (torch.Tensor): Input params of the multiple attention heads 
         """
         # Get Multiheaded attention score
-        out = torch.cat([head(x) for head in self.heads], dim=-1).to(device=self.device)
+        out = torch.cat([head(x) for head in self.heads], dim=-1).to(device=self.device, dtype=self.model_precision)
 
         # Project into the residual dimensions
         out = self.proj(out)
 
         # Include dropout
         out = self.Dropout(out)
+
+        # Change dtype and device
+        out = out.to(device=self.device, dtype = self.model_precision)
 
         return out
