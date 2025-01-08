@@ -4,6 +4,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 from model.blocks.decoder import Block
 from positional_encoders.sinusoidal_positional_encoding import SinusoidalPositionalEncoding
+import warnings
 
 # Model class
 class LanguageModel(nn.Module):
@@ -17,7 +18,8 @@ class LanguageModel(nn.Module):
                  num_heads: int = 4, 
                  num_layers: int = 6, 
                  dropout: float = 0.2, 
-                 positional_encoder_type: str = "sinusoidal"):
+                 positional_encoder_type: str = "sinusoidal",
+                 model_precision = torch.float32):
         """
         Function: Instances an object of class `LanguageModel`
         Args:
@@ -30,6 +32,7 @@ class LanguageModel(nn.Module):
             num_layers (int): Number of Sequential Decoders to place
             dropout (float): Dropout value to be set in the model layers
             positional_encoder_type (Enum(str)): Either has conventional linear postional encoding, RoPE or sinusoidal positional encoding
+            model_precision : Define the model float precision
         """
         super().__init__()
 
@@ -43,6 +46,16 @@ class LanguageModel(nn.Module):
 
         # Updating the selected device variable
         device = self.device
+
+        # Set model precision to default with a warning
+        if model_precision not in [torch.float32, torch.float64, torch.float16, torch.bfloat16]:
+            warnings.warn("Defaulting to torch.float32, {model_precision} is not a valid dtype")
+            self.model_precision = torch.float32
+
+        else:
+            self.model_precision = model_precision
+
+        model_precision = self.model_precision
 
         # Setting positional encoders
         if not isinstance(positional_encoder_type, str):
@@ -90,7 +103,7 @@ class LanguageModel(nn.Module):
         self.vocab_size = vocab_size
 
         # Setting the Embedding layers
-        self.token_embedding_table = nn.Embedding(vocab_size, n_embedd).to(device=device)
+        self.token_embedding_table = nn.Embedding(vocab_size, n_embedd).to(device=device, dtype=model_precision)
 
         # Validating attention params
         if not isinstance(attention_size, int):
@@ -114,14 +127,14 @@ class LanguageModel(nn.Module):
 
         # Setting up attention heads splitting the number of attention size over the n heads
         self.blocks = nn.Sequential(
-            *[Block(num_heads = num_heads, n_embedd=n_embedd, block_size=block_size, device=device, attention_size=attention_size, dropout=dropout, positional_encoder_type=positional_encoder_type) for _ in range(num_layers)] 
+            *[Block(num_heads = num_heads, n_embedd=n_embedd, block_size=block_size, device=device, attention_size=attention_size, dropout=dropout, positional_encoder_type=positional_encoder_type, model_precision=model_precision) for _ in range(num_layers)] 
         )
 
         # Layer norm
-        self.ln = nn.LayerNorm(attention_size)
+        self.ln = nn.LayerNorm(attention_size, dtype=model_precision)
 
         # Pass the value to the LM head to get the token out
-        self.lm_head = nn.Linear(attention_size, vocab_size)
+        self.lm_head = nn.Linear(attention_size, vocab_size).to(device=device, dtype=model_precision)
 
     def forward(self, idx: torch.Tensor, targets: torch.Tensor = None):
         """
@@ -144,12 +157,12 @@ class LanguageModel(nn.Module):
 
         # Embedd Tokens
         token_embeddings = self.token_embedding_table(idx) # B, T, C = (B, T, n_embedd)
-        token_embeddings = token_embeddings.to(device=self.device)
+        token_embeddings = token_embeddings.to(device=self.device, dtype=self.model_precision)
 
         # Embedd Position
         ## If naive linear
         if self.positional_encoder_type == "naive":
-            positional_indices = torch.arange(T).to(device=self.device)
+            positional_indices = torch.arange(T).to(device=self.device, dtype=self.model_precision)
             positional_embeddings = self.position_embedding_table(positional_indices) # (T,C)
             
             # Combine the two embeddings to get our input tensor
@@ -160,7 +173,7 @@ class LanguageModel(nn.Module):
 
         # If sinusoidal positional encoding
         elif self.positional_encoder_type == "sinusoidal":
-            positional_embeddings = SinusoidalPositionalEncoding(T=T, n_embedd=self.n_embedd, device=self.device)
+            positional_embeddings = SinusoidalPositionalEncoding(T=T, n_embedd=self.n_embedd, device=self.device, model_precision=self.model_precision)
 
             # Combine the two embeddings to get our input tensor
             x = token_embeddings + positional_embeddings
