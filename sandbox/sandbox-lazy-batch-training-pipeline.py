@@ -1,4 +1,5 @@
 from pipelines.training.lazy_batch_training import lazy_batch_training 
+import torch
 
 # Data Params
 data_path = "./data_archive/ROOTS.txt"
@@ -23,13 +24,14 @@ model_params = {
     'num_heads': 8,
     'num_layers' : 6,
     'dropout': 0.20,
-    'positional_encoder_type' : 'RoPE'
+    'positional_encoder_type' : 'RoPE', 
+    'model_precision': "float16"
 }
 
 # Model check pointing params
 check_point_params = {
-    'save_steps' : 500,
-    "log_to_mlflow" : True,
+    'save_steps' : 1000,
+    "log_to_mlflow" : False,
     "mlflow_experiment_name": "",
     "mlflow_tracking_uri" :  "",
     "mlflow_model_name" : "",
