@@ -1,13 +1,14 @@
 import torch
 from torch import nn
 
-def SinusoidalPositionalEncoding(T: int, n_embedd: int, n: int = 10_000, device: str = "cpu"):
+def SinusoidalPositionalEncoding(T: int, n_embedd: int, n: int = 10_000, device: str = "cpu", model_precision = torch.float32):
     """
     Function: Retrieves Sinusoidal Positional encoding for various dimensions
     Args:
         x (torch.Tensor): The vector to be positionally encoded
         n_embedd (int): Linear dimension in which the token in projected into
         device (str): The device on which the operation must be carried out `cuda` or `cpu`
+        model_precision : Define the model float precision
     """
     
     # If the n_embedd is odd raise error
@@ -19,11 +20,11 @@ def SinusoidalPositionalEncoding(T: int, n_embedd: int, n: int = 10_000, device:
     embeddings = torch.zeros(T, n_embedd).to(device=device)
 
     # Calculate denominator map
-    denom = torch.pow(n, 2*torch.arange(0, n_embedd//2)/n_embedd).to(device=device)
+    denom = torch.pow(n, 2*torch.arange(0, n_embedd//2)/n_embedd).to(device=device, dtype=model_precision)
 
     # Update embedding
-    embeddings[:, 0::2] = torch.sin(positions/denom).to(device=device)
-    embeddings[:, 1::2] = torch.cos(positions/denom).to(device=device)
-
+    embeddings[:, 0::2] = torch.sin(positions/denom).to(device=device, dtype=model_precision)
+    embeddings[:, 1::2] = torch.cos(positions/denom).to(device=device, dtype=model_precision)
+    
     # Get embedding map
-    return torch.tensor(embeddings).to(device=device)
+    return torch.tensor(embeddings).to(device=device, dtype=model_precision)

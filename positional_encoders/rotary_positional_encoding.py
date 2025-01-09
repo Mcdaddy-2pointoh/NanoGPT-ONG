@@ -1,24 +1,21 @@
 import torch
 
 
-def RotaryPositionEncoding(q, k, T, attention_head_size, device):
+def RotaryPositionEncoding(q, k, T, attention_head_size, device, model_precision=torch.float32):
     """
-    Apply Rotary Positional Embedding (RoPE) to q and k tensors.
-
+    Function: Apply Rotary Positional Embedding (RoPE) to q and k tensors.
     Args:
         q (torch.Tensor): Query tensor of shape (batch_size, time, attention_head_size)
         k (torch.Tensor): Key tensor of shape (batch_size, time, attention_head_size)
         T (int): Sequence length
         attention_head_size (int): Dimension of each attention head
         device (str): Device ('cuda' or 'cpu')
-
-    Returns:
-        Tuple[torch.Tensor, torch.Tensor]: RoPE-applied q and k
+        model_precision : Define the model float precision
     """
 
     # Generate position indices (0, 1, 2, ..., T-1) for each token in the sequence.
     # Shape: (T, 1)
-    position_ids = torch.arange(T, dtype=torch.float32, device=device).unsqueeze(1)
+    position_ids = torch.arange(T, dtype=model_precision, device=device).unsqueeze(1)
 
     # Calculate inverse frequencies for the sinusoidal embeddings.
     # head_dim/2 frequencies are computed (only for even positions in embeddings).
@@ -51,12 +48,12 @@ def RotaryPositionEncoding(q, k, T, attention_head_size, device):
     # Apply rotation to q1 and q2 using sine and cosine.
     # q_rot = [q1 * cos - q2 * sin, q1 * sin + q2 * cos]
     # Shape: (batch_size, T, head_dim)
-    q_rot = torch.cat([q1 * cos - q2 * sin, q1 * sin + q2 * cos], dim=-1)
+    q_rot = torch.cat([q1 * cos - q2 * sin, q1 * sin + q2 * cos], dim=-1).to(dtype=model_precision, device=device)
 
     # Apply the same rotation logic to k1 and k2.
     # k_rot = [k1 * cos - k2 * sin, k1 * sin + k2 * cos]
     # Shape: (batch_size, T, head_dim)
-    k_rot = torch.cat([k1 * cos - k2 * sin, k1 * sin + k2 * cos], dim=-1)
+    k_rot = torch.cat([k1 * cos - k2 * sin, k1 * sin + k2 * cos], dim=-1).to(dtype=model_precision, device=device)
 
     # Return the rotated query and key tensors, embedding positional information.
     return q_rot, k_rot

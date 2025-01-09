@@ -287,9 +287,9 @@ def lazy_batch_training(
     elif not isinstance(model_params, dict):
         raise TypeError("Argument `model_params` must be of type dict")
 
-    elif not set(list(model_params.keys())).issuperset(set(['block_size', 'n_embedd', 'attention_size', 'num_heads', 'num_layers', 'dropout', 'positional_encoder_type'])):
+    elif not set(list(model_params.keys())).issuperset(set(['model_precision','block_size', 'n_embedd', 'attention_size', 'num_heads', 'num_layers', 'dropout', 'positional_encoder_type'])):
         raise ValueError("Argument `model_params` must be a dictionary with the following keys 'block_size', 'n_embedd', 'attention_size', 'num_heads', 'num_layers', 'dropout', 'positional_encoder_type'")
-            
+
     # Initialise a model class
     try:
         model = LanguageModel(
@@ -301,6 +301,7 @@ def lazy_batch_training(
             num_layers=model_params['num_layers'],
             dropout=model_params['dropout'],
             positional_encoder_type=model_params['positional_encoder_type'],
+            model_precision=model_params['model_precision'],
             device=device
         )
         model = model.to(device=device)
@@ -370,9 +371,12 @@ def lazy_batch_training(
         "tokenizer_type" : "tiktoken",
         "tokenizer_encoding" : tokenizer_encoding,
         "vocab_size" : tokenizer_vocab_size,
-        "positional_encoder_type" : model_params['positional_encoder_type']
+        "positional_encoder_type" : model_params['positional_encoder_type'],
+        "model_precision" : model_params['model_precision']
     }
     
+
+
     # Parsing the model and optimizer to the training theory
     model, losses = lazy_batch_trainer(dir_path=array_directory,
                                        model=model,
