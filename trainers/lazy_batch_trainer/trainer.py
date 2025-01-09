@@ -16,9 +16,9 @@ def lazy_batch_trainer(dir_path: str, model: torch.nn.Module, optimizer, batch_s
         optimizer : Torch optimizer object used for training the model
         block_size (int): Block size is the maximum context window of the model
         batch_size (int): Batch size is the number of concurrent samples we can load for GPU saturation
-        steps (int) : The number of steps to train the model for 
+        steps (int) : The number of steps to train the model for
         check_point_params (dict): Dictionary contains information about the checkpointing the model
-        device (str) : Set the computational device  
+        device (str) : Set the computational device
         train_ratio (0 < float < 1): The ratio of data to be considered as training data
         model_params (dict): Captures all the model training params
     """
@@ -112,7 +112,7 @@ def lazy_batch_trainer(dir_path: str, model: torch.nn.Module, optimizer, batch_s
 
                     # Log all model params and Hyperparameters
                     for k in model_params.keys():
-                            mlflow.log_param(str(k), model_params[k])
+                        mlflow.log_param(str(k), model_params[k])
 
                     # LLM training loop
                     for step in tqdm(range(steps)):
