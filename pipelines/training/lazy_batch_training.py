@@ -374,8 +374,6 @@ def lazy_batch_training(
         "positional_encoder_type" : model_params['positional_encoder_type'],
         "model_precision" : model_params['model_precision']
     }
-    
-
 
     # Parsing the model and optimizer to the training theory
     model, losses = lazy_batch_trainer(dir_path=array_directory,

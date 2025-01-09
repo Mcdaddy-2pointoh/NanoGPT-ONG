@@ -48,7 +48,7 @@ class LanguageModel(nn.Module):
         device = self.device
 
         # Set model precision to default with a warning
-        if model_precision not in ["float32", "float64", "float16", "bfloat16"]:
+        if model_precision not in ["float32", "float64", "bfloat16"]:
             warnings.warn("Defaulting to torch.float32, {model_precision} is not a valid dtype")
             self.model_precision = torch.float32
 
@@ -56,7 +56,6 @@ class LanguageModel(nn.Module):
             precison_types = {
                 "float32": torch.float32, 
                 "float64": torch.float64, 
-                "float16": torch.float16, 
                 "bfloat16": torch.bfloat16
             }
             self.model_precision = precison_types[model_precision]

@@ -56,7 +56,7 @@ class Block(nn.Module):
             raise ValueError("Argument `positional_encoder_type` must be either 'RoPE', 'sinusoidal' or 'naive'")
 
         # Set model precision to default with a warning
-        if model_precision not in [torch.float32, torch.float64, torch.float16, torch.bfloat16]:
+        if model_precision not in [torch.float32, torch.float64, torch.bfloat16]:
             warnings.warn("Defaulting to torch.float32, {model_precision} is not a valid dtype")
             self.model_precision = torch.float32
 
