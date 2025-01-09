@@ -25,7 +25,7 @@ model_params = {
     'num_layers' : 6,
     'dropout': 0.20,
     'positional_encoder_type' : 'RoPE', 
-    'model_precision': "float16"
+    'model_precision': "bfloat16"
 }
 
 # Model check pointing params
@@ -42,7 +42,7 @@ check_point_params = {
 training_params = {
     "learning_rate" : 1e-3,
     "batch_size" : 6,
-    "steps" : 15_000,
+    "steps" : 1000,
 }
 
 # Computational Device
