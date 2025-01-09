@@ -125,7 +125,6 @@ def lazy_batch_trainer(dir_path: str, model: torch.nn.Module, optimizer, batch_s
                                                     loss=loss,
                                                     previous_segment=training_segment)
                             
-                            print(training_segment)
 
                             # Training Segment is None implying no more data left
                             if training_segment is None:
@@ -207,8 +206,6 @@ def lazy_batch_trainer(dir_path: str, model: torch.nn.Module, optimizer, batch_s
                                                 loss=loss,
                                                 previous_segment=training_segment)
                         
-                        print(training_segment)
-
                         # Training Segment is None implying no more data left
                         if training_segment is None:
                             break
@@ -261,6 +258,7 @@ def lazy_batch_trainer(dir_path: str, model: torch.nn.Module, optimizer, batch_s
                     # Save loss
                     loss.append(batch_loss.item())
                     cummulated_loss.append(batch_loss.item())
+                    print(batch_loss)
 
                     # Extract the LR
                     current_lr = optimizer.param_groups[0]['lr'] 
