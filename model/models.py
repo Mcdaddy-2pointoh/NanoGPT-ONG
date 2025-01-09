@@ -141,6 +141,9 @@ class LanguageModel(nn.Module):
         # Pass the value to the LM head to get the token out
         self.lm_head = nn.Linear(attention_size, vocab_size).to(device=device, dtype=model_precision)
 
+    def get_precision(self):
+        return self.model_precision
+
     def forward(self, idx: torch.Tensor, targets: torch.Tensor = None):
         """
         Function: Feed forward function of the model 
