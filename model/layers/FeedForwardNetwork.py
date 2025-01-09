@@ -37,7 +37,7 @@ class FeedForward(nn.Module):
         device = self.device
 
         # Set model precision to default with a warning
-        if model_precision not in [torch.float32, torch.float64, torch.float16, torch.bfloat16,torch.float8_e4m3fn,torch.float8_e5m2]:
+        if model_precision not in [torch.float32, torch.float64, torch.float16, torch.bfloat16]:
             warnings.warn("Defaulting to torch.float32, {model_precision} is not a valid dtype")
             self.model_precision = torch.float32
 

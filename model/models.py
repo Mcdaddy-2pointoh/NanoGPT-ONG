@@ -19,7 +19,7 @@ class LanguageModel(nn.Module):
                  num_layers: int = 6, 
                  dropout: float = 0.2, 
                  positional_encoder_type: str = "sinusoidal",
-                 model_precision = torch.float32):
+                 model_precision: str = "float32"):
         """
         Function: Instances an object of class `LanguageModel`
         Args:
@@ -48,12 +48,18 @@ class LanguageModel(nn.Module):
         device = self.device
 
         # Set model precision to default with a warning
-        if model_precision not in [torch.float32, torch.float64, torch.float16, torch.bfloat16]:
+        if model_precision not in ["float32", "float64", "float16", "bfloat16"]:
             warnings.warn("Defaulting to torch.float32, {model_precision} is not a valid dtype")
             self.model_precision = torch.float32
 
         else:
-            self.model_precision = model_precision
+            precison_types = {
+                "float32": torch.float32, 
+                "float64": torch.float64, 
+                "float16": torch.float16, 
+                "bfloat16": torch.bfloat16
+            }
+            self.model_precision = precison_types[model_precision]
 
         model_precision = self.model_precision
 
@@ -64,7 +70,7 @@ class LanguageModel(nn.Module):
         # Set `positional_encoder_type` to naive
         elif positional_encoder_type == "naive":
             self.positional_encoder_type = "naive"
-            self.position_embedding_table = nn.Embedding(block_size, n_embedd).to(device=device)
+            self.position_embedding_table = nn.Embedding(block_size, n_embedd).to(device=device, dtype=model_precision)
 
         # Set `positional_encoder_type` to sinusoidal
         elif positional_encoder_type == "sinusoidal":
