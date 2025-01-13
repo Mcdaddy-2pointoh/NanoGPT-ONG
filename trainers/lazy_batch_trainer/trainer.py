@@ -258,7 +258,6 @@ def lazy_batch_trainer(dir_path: str, model: torch.nn.Module, optimizer, batch_s
                     # Save loss
                     loss.append(batch_loss.item())
                     cummulated_loss.append(batch_loss.item())
-                    print(batch_loss)
 
                     # Extract the LR
                     current_lr = optimizer.param_groups[0]['lr'] 
