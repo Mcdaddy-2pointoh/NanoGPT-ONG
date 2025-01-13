@@ -30,7 +30,7 @@ model_params = {
 
 # Model check pointing params
 check_point_params = {
-    'save_steps' : 1000,
+    'save_steps' : 10_000,
     "log_to_mlflow" : False,
     "mlflow_experiment_name": "",
     "mlflow_tracking_uri" :  "",
@@ -42,7 +42,7 @@ check_point_params = {
 training_params = {
     "learning_rate" : 1e-3,
     "batch_size" : 6,
-    "steps" : 1000,
+    "steps" : 50_000,
 }
 
 # Computational Device
