@@ -7,7 +7,8 @@ from trainers.lazy_batch_trainer.trainer import lazy_batch_trainer
 from model.models import LanguageModel
 import numpy as np
 import json
-from telemetry.visualisers import plot_loss
+from schedulers.learning_rate import set_lr_scheduler
+from telemetry.visualisers import plot_loss, plot_lr
 
 
 def lazy_batch_training(
@@ -62,7 +63,7 @@ def lazy_batch_training(
 
     # Create a run directory
     os.mkdir(f"{runs_dir}/run-{run_number}")
-    os.mkdir(f"{runs_dir}/run-{run_number}/loss-logs")
+    os.mkdir(f"{runs_dir}/run-{run_number}/metric-logs")
     os.mkdir(f"{runs_dir}/run-{run_number}/results")
     os.mkdir(f"{runs_dir}/run-{run_number}/model")
     os.mkdir(f"{runs_dir}/run-{run_number}/tokenizer")
@@ -347,6 +348,12 @@ def lazy_batch_training(
     # Initialise an optimizer object
     try:
         optimizer = torch.optim.AdamW(model.parameters(), lr=training_params['learning_rate'])
+        
+        if 'lr_scheduler_type' in training_params.keys() and training_params['lr_scheduler_type'] is not None:
+            lr_scheduler = set_lr_scheduler(optimizer, training_params['lr_scheduler_type'], training_params['lr_scheduler_params'])
+
+        else:
+            lr_scheduler = None
 
     except Exception as e:
         raise RuntimeError("Failed to initialise a `Optimizer` object") from e
@@ -376,7 +383,7 @@ def lazy_batch_training(
     }
 
     # Parsing the model and optimizer to the training theory
-    model, losses = lazy_batch_trainer(dir_path=array_directory,
+    model, losses, lr = lazy_batch_trainer(dir_path=array_directory,
                                        model=model,
                                        optimizer=optimizer,
                                        batch_size=training_params['batch_size'],
@@ -385,11 +392,14 @@ def lazy_batch_training(
                                        device=device,
                                        check_point_params=check_point_params,
                                        train_ratio=0.95,
-                                       model_params=model_params)
+                                       model_params=model_params,
+                                       lr_scheduler=lr_scheduler
+                                       )
     
     # Save loss to a directory
     if save_loss_curves:
-        plot_loss(losses, f"{runs_dir}/run-{run_number}/loss-logs", smoothen=smoothen_loss_plots)
+        plot_loss(losses, f"{runs_dir}/run-{run_number}/metric-logs", smoothen=smoothen_loss_plots)
+        plot_lr(lr, f"{runs_dir}/run-{run_number}/metric-logs", smoothen=smoothen_loss_plots)
 
     torch.save(model.state_dict(), f"{runs_dir}/run-{run_number}/model/LanguageModel.pt")
     torch.save(optimizer.state_dict(), f"{runs_dir}/run-{run_number}/model/Optimizer.pt")
@@ -398,8 +408,8 @@ def lazy_batch_training(
 
     # Save the losses to the npy file
     losses = np.array(losses)
-    np.save(f"{runs_dir}/run-{run_number}/loss-logs/losses.npy", losses)
+    lr = np.array(lr)
+    np.save(f"{runs_dir}/run-{run_number}/metric-logs/losses.npy", losses)
+    np.save(f"{runs_dir}/run-{run_number}/metric-logs/lr.npy", lr)
 
-    return model, losses
-
-
+    return model, losses, lr
