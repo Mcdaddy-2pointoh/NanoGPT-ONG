@@ -30,7 +30,7 @@ model_params = {
 
 # Model check pointing params
 check_point_params = {
-    'save_steps' : 10_000,
+    'save_steps' : 1_000,
     "log_to_mlflow" : False,
     "mlflow_experiment_name": "",
     "mlflow_tracking_uri" :  "",
@@ -40,9 +40,15 @@ check_point_params = {
 
 # Training params
 training_params = {
-    "learning_rate" : 1e-3,
-    "batch_size" : 6,
-    "steps" : 50_000,
+    "learning_rate" : 0.0001,
+    "batch_size" : 10,
+    "steps" : 15_000,
+    "lr_scheduler_type": "CosineAnnealingWarmRestarts",
+    "lr_scheduler_params" : {
+        "T_0": 150,
+        "T_mult": 2,
+        "eta_min": 1e-6
+    }
 }
 
 # Computational Device

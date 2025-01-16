@@ -3,8 +3,5 @@ import os
 import torch
 
 # Print min loss
-x = np.load("./runs/run-0003/loss-logs/losses.npy")
+x = np.load("C:/Users/sharv/Documents/Sharvil/Projects/NanoGPT-ONG/runs/run-0025/metric-logs/losses.npy")
 print(np.min(x))
-
-# Print dir contents
-print(os.listdir("./runs/run-0009 (wiki-2500)/model"))
