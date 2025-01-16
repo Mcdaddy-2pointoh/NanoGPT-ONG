@@ -7,7 +7,7 @@ from trainers.lazy_batch_trainer.switch import switch
 import numpy as np
 from data_processing.augmenters import train_test_splitter, batch_generator
 
-def lazy_batch_trainer(dir_path: str, model: torch.nn.Module, optimizer, batch_size: int, block_size: int, steps: int, check_point_params: dict = None, device: str = 'cpu', train_ratio: float = 0.90, model_params={}):
+def lazy_batch_trainer(dir_path: str, model: torch.nn.Module, optimizer, batch_size: int, block_size: int, steps: int, check_point_params: dict = None, device: str = 'cpu', train_ratio: float = 0.90, model_params={}, lr_scheduler = None):
     """
     Function: Trains the model in parts upon each of the file in dir_path
     Args:
@@ -21,6 +21,7 @@ def lazy_batch_trainer(dir_path: str, model: torch.nn.Module, optimizer, batch_s
         device (str) : Set the computational device
         train_ratio (0 < float < 1): The ratio of data to be considered as training data
         model_params (dict): Captures all the model training params
+        lr_scheduler (torch.optim.lr | None): The learning rate scheduler object
     """
 
     # Create a dictionary to validate the coverage of data used
@@ -65,6 +66,7 @@ def lazy_batch_trainer(dir_path: str, model: torch.nn.Module, optimizer, batch_s
             # Inital params 
             loss = None
             cummulated_loss = []
+            cummulated_lr = []
             training_segment = None
             checkpoint_idx = str(1).zfill(5)
             track_via_mlflow = False
@@ -186,11 +188,18 @@ def lazy_batch_trainer(dir_path: str, model: torch.nn.Module, optimizer, batch_s
                         mlflow.log_metric("step_training_loss", batch_loss.item())
                         mlflow.log_metric("step_learning_rate", current_lr)
 
+                        # Save the LR
+                        cummulated_lr.append(current_lr)
+
+                        # If there is a LR scheduler 
+                        if lr_scheduler is not None:
+                            lr_scheduler.step()
+
                     # Log the model to mlflow
                     mlflow.pytorch.log_model(model, check_point_params['model_name'])
                     mlflow.log_artifact(dir_path, check_point_params['dataset_name'])
 
-                    return model, cummulated_loss
+                    return model, cummulated_loss, cummulated_lr
 
             # Run without ML FLOW   
             else:
@@ -262,10 +271,11 @@ def lazy_batch_trainer(dir_path: str, model: torch.nn.Module, optimizer, batch_s
                     # Extract the LR
                     current_lr = optimizer.param_groups[0]['lr'] 
 
-                return model, cummulated_loss
+                    # Save the LR 
+                    cummulated_lr.append(current_lr)
 
-            
+                    # If there is a LR scheduler 
+                    if lr_scheduler is not None:
+                        lr_scheduler.step()
 
-
-
-                
+                return model, cummulated_loss, cummulated_lr
