@@ -51,6 +51,7 @@ def lazy_batch_training(
 
     # Check device 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    data_dir = ""
 
     if not os.path.exists(runs_dir):
         os.mkdir(runs_dir)
@@ -71,7 +72,6 @@ def lazy_batch_training(
 
     # Check device 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-
 
     # DATA INGESTION 
     # Validate the data input
@@ -183,6 +183,8 @@ def lazy_batch_training(
         # Just ignore processing
         else:
             data_dir = os.path.dirname(data)
+
+    
     
     # DATA TOKENIZATION
     # Load the data from each segment file
