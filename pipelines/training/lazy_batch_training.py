@@ -110,7 +110,7 @@ def lazy_batch_training(
                 raise TypeError(f"Argument `split_threshold` must be of type int.")
 
             # Target directory is not empty
-            elif len(file_splitter_params['segment_target_dir']) != 0:
+            elif len(os.listdir(file_splitter_params['segment_target_dir'])) != 0:
                 value = str(input("File dir is not empty do you want to overwrite existing file `Y / N`?")).upper()
 
                 if value not in ['Y', 'N']:
