@@ -1,4 +1,6 @@
 
+import random
+
 def switch(status_dictionary: dict, loss: list = None, previous_segment: str = None):
     """
     Function: Selects the next segment to train and updates the status dictionary with previous segments training information
@@ -58,4 +60,4 @@ def switch(status_dictionary: dict, loss: list = None, previous_segment: str = N
         
         # Else return the pending segment
         else:
-            return status_dictionary, status_dictionary['pending'][0]
+            return status_dictionary, random.choice(status_dictionary['pending'])

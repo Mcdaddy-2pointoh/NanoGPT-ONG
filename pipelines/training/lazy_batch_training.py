@@ -70,8 +70,6 @@ def lazy_batch_training(
     os.mkdir(f"{runs_dir}/run-{run_number}/tokenizer")
     os.mkdir(f"{runs_dir}/run-{run_number}/checkpoints")
 
-    # Check device 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # DATA INGESTION 
     # Validate the data input
@@ -127,7 +125,7 @@ def lazy_batch_training(
 
                         # Run partitioning
                         print("Please monitor CPU stats while splitting files")
-                        file_splitter(
+                        data_dir = file_splitter(
                             data=data,
                             target_dir=file_splitter_params['segment_target_dir'],
                             split_threshold=file_splitter_params['split_threshold'], # 200k lines per file segment
@@ -145,7 +143,7 @@ def lazy_batch_training(
                     if value == "Y":
                         try:
                             print("Please monitor CPU stats while splitting files")
-                            file_splitter(
+                            data_dir = file_splitter(
                                     data=data,
                                     target_dir=file_splitter_params['segment_target_dir'],
                                     split_threshold=file_splitter_params['split_threshold'], # 200k lines per file segment
@@ -183,8 +181,6 @@ def lazy_batch_training(
         # Just ignore processing
         else:
             data_dir = os.path.dirname(data)
-
-    
     
     # DATA TOKENIZATION
     # Load the data from each segment file
@@ -309,7 +305,6 @@ def lazy_batch_training(
         )
         model = model.to(device=device)
 
-
     except Exception as e:
         raise RuntimeError("Failed to initialise a `LanguageModel` object") from e
 
@@ -320,7 +315,7 @@ def lazy_batch_training(
     elif not set(list(training_params.keys())).issuperset(set(['learning_rate', 'batch_size', 'steps'])):
         raise ValueError("Argument `training_params` must be of type dict and must have keys ['learning_rate', 'batch_size', 'steps']")
     
-    # Validate the batch_size
+    # Validate the learning_rate
     elif not isinstance(training_params['learning_rate'], float):
         try:
             training_params['learning_rate'] = float(training_params['learning_rate'])
@@ -336,7 +331,7 @@ def lazy_batch_training(
         except Exception as e:
             raise TypeError("Argument `training_params['batch_size']` must be of type `int`") from e
         
-    # Validate the batch_size
+    # Validate the steps
     elif not isinstance(training_params['steps'], int):
         try:
             training_params['steps'] = int(training_params['steps'])
